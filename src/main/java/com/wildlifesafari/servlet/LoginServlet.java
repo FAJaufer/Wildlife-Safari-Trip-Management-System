@@ -32,7 +32,7 @@ public class LoginServlet extends HttpServlet {
             if (user != null && BCrypt.checkpw(password, user.getPassword())) {
                 HttpSession session = request.getSession();
                 session.setAttribute("loggedInUser", user);
-                response.sendRedirect("views/dashboard.jsp");
+                response.sendRedirect(request.getContextPath() + "/dashboard");
             } else {
                 response.sendRedirect("views/login.jsp?error=1");
             }
