@@ -2,6 +2,7 @@ package com.wildlifesafari.servlet;
 
 import com.wildlifesafari.dao.UserDAO;
 import com.wildlifesafari.model.User;
+import org.mindrot.jbcrypt.BCrypt;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -28,8 +29,7 @@ public class LoginServlet extends HttpServlet {
         try {
             User user = userDAO.findByEmail(email);
 
-            // NOTE: plain text comparison for now — we'll add password hashing next
-            if (user != null && user.getPassword().equals(password)) {
+            if (user != null && BCrypt.checkpw(password, user.getPassword())) {
                 HttpSession session = request.getSession();
                 session.setAttribute("loggedInUser", user);
                 response.sendRedirect("views/dashboard.jsp");
