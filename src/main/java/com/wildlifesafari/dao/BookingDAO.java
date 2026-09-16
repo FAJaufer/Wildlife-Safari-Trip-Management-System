@@ -80,10 +80,10 @@ public class BookingDAO {
         return bookings;
     }
 
-    public void create(Booking b) throws SQLException {
+    public int create(Booking b) throws SQLException {
         String sql = "INSERT INTO bookings (user_id, package_id, safari_date, time_slot, participants, total_cost, status, booking_reference) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = DBConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             String reference = "BK-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
 
@@ -96,7 +96,14 @@ public class BookingDAO {
             stmt.setString(7, b.getStatus());
             stmt.setString(8, reference);
             stmt.executeUpdate();
+
+            try (ResultSet keys = stmt.getGeneratedKeys()) {
+                if (keys.next()) {
+                    return keys.getInt(1);
+                }
+            }
         }
+        return 0;
     }
 
     public void updateStatus(int id, String status) throws SQLException {

@@ -44,6 +44,7 @@
             <div class="col-md-4 mb-3"><a href="${pageContext.request.contextPath}/drivers" class="text-decoration-none"><div class="card p-3">🚗 Manage Drivers</div></a></div>
             <div class="col-md-4 mb-3"><a href="${pageContext.request.contextPath}/guides" class="text-decoration-none"><div class="card p-3">🧭 Manage Guides</div></a></div>
             <div class="col-md-4 mb-3"><a href="${pageContext.request.contextPath}/schedules" class="text-decoration-none"><div class="card p-3">📅 Manage Schedules</div></a></div>
+            <div class="col-md-4 mb-3"><a href="${pageContext.request.contextPath}/payments" class="text-decoration-none"><div class="card p-3">💳 Payment Records</div></a></div>
         <% } %>
 
         <% if (role.equals("tourist")) { %>

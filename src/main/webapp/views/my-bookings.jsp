@@ -54,6 +54,9 @@
             <td>$<%= b.getTotalCost() %></td>
             <td><span class="badge <%= "confirmed".equals(b.getStatus()) ? "bg-success" : ("cancelled".equals(b.getStatus()) ? "bg-danger" : "bg-secondary") %>"><%= b.getStatus() %></span></td>
             <td>
+                <a href="${pageContext.request.contextPath}/payments?action=pay&bookingId=<%= b.getId() %>" class="btn btn-sm btn-outline-success me-1">
+                    💳 Pay / Receipt
+                </a>
                 <% if ("confirmed".equals(b.getStatus())) { %>
                 <a href="${pageContext.request.contextPath}/bookings?action=cancel&id=<%= b.getId() %>" class="btn btn-sm btn-danger" onclick="return confirm('Cancel this booking?')">Cancel</a>
                 <% } %>

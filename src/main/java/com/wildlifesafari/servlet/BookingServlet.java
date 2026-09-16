@@ -48,7 +48,6 @@ public class BookingServlet extends HttpServlet {
             }
 
             if ("book".equals(action)) {
-                // Show booking form for a specific package
                 int packageId = Integer.parseInt(request.getParameter("packageId"));
                 SafariPackage pkg = packageDAO.findById(packageId);
                 request.setAttribute("bookPackage", pkg);
@@ -57,14 +56,12 @@ public class BookingServlet extends HttpServlet {
             }
 
             if ("mine".equals(request.getParameter("view"))) {
-                // Tourist's own booking history
                 List<Booking> myBookings = bookingDAO.findByUserId(user.getId());
                 request.setAttribute("bookings", myBookings);
                 request.getRequestDispatcher("/views/my-bookings.jsp").forward(request, response);
                 return;
             }
 
-            // Default: browse all available packages
             List<SafariPackage> packages = packageDAO.findAll();
             request.setAttribute("packages", packages);
             request.getRequestDispatcher("/views/browse-packages.jsp").forward(request, response);
@@ -110,9 +107,9 @@ public class BookingServlet extends HttpServlet {
             booking.setTotalCost(totalCost);
             booking.setStatus("confirmed");
 
-            bookingDAO.create(booking);
+            int newBookingId = bookingDAO.create(booking);
 
-            response.sendRedirect(request.getContextPath() + "/bookings?view=mine&success=1");
+            response.sendRedirect(request.getContextPath() + "/payments?action=pay&bookingId=" + newBookingId);
 
         } catch (SQLException e) {
             e.printStackTrace();
