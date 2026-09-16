@@ -91,6 +91,23 @@ public class SafariScheduleDAO {
         }
     }
 
+    public List<SafariSchedule> findByGuideId(int guideId) throws SQLException {
+        List<SafariSchedule> schedules = new ArrayList<>();
+        String sql = SELECT_BASE + "WHERE s.guide_id = ? AND s.trip_status = 'scheduled' ORDER BY s.schedule_date ASC";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, guideId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    schedules.add(mapRow(rs));
+                }
+            }
+        }
+        return schedules;
+    }
+
     public void updateStatus(int id, String status) throws SQLException {
         String sql = "UPDATE safari_schedules SET trip_status = ? WHERE id = ?";
         try (Connection conn = DBConnection.getConnection();
@@ -100,6 +117,23 @@ public class SafariScheduleDAO {
             stmt.setInt(2, id);
             stmt.executeUpdate();
         }
+    }
+
+    public List<SafariSchedule> findByDriverId(int driverId) throws SQLException {
+        List<SafariSchedule> schedules = new ArrayList<>();
+        String sql = SELECT_BASE + "WHERE s.driver_id = ? AND s.trip_status = 'scheduled' ORDER BY s.schedule_date ASC";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, driverId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    schedules.add(mapRow(rs));
+                }
+            }
+        }
+        return schedules;
     }
 
     private SafariSchedule mapRow(ResultSet rs) throws SQLException {

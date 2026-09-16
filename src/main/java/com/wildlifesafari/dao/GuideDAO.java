@@ -82,6 +82,22 @@ public class GuideDAO {
         }
     }
 
+    public Guide findByUserId(int userId) throws SQLException {
+        String sql = "SELECT g.*, u.name AS guide_name FROM guides g " +
+                "LEFT JOIN users u ON g.user_id = u.id WHERE g.user_id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, userId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapRow(rs);
+                }
+            }
+        }
+        return null;
+    }
+
     private Guide mapRow(ResultSet rs) throws SQLException {
         return new Guide(
                 rs.getInt("id"),

@@ -82,6 +82,22 @@ public class DriverDAO {
         }
     }
 
+    public Driver findByUserId(int userId) throws SQLException {
+        String sql = "SELECT d.*, u.name AS driver_name FROM drivers d " +
+                "LEFT JOIN users u ON d.user_id = u.id WHERE d.user_id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, userId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapRow(rs);
+                }
+            }
+        }
+        return null;
+    }
+
     private Driver mapRow(ResultSet rs) throws SQLException {
         return new Driver(
                 rs.getInt("id"),

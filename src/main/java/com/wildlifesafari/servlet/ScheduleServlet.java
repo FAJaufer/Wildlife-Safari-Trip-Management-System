@@ -31,14 +31,40 @@ public class ScheduleServlet extends HttpServlet {
         HttpSession session = request.getSession(false);
         User user = (session != null) ? (User) session.getAttribute("loggedInUser") : null;
 
-        if (user == null || !(user.getRole().equals("admin") || user.getRole().equals("manager"))) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Only managers/admins can manage schedules");
+        if (user == null) {
+            response.sendRedirect(request.getContextPath() + "/views/login.jsp");
             return;
         }
 
-        String action = request.getParameter("action");
-
         try {
+            if ("mine".equals(request.getParameter("view"))) {
+                if (user.getRole().equals("guide")) {
+                    Guide guide = guideDAO.findByUserId(user.getId());
+                    List<SafariSchedule> myTrips = (guide != null) ? scheduleDAO.findByGuideId(guide.getId()) : new java.util.ArrayList<>();
+                    request.setAttribute("myTrips", myTrips);
+                    request.setAttribute("roleLabel", "Guide");
+                    request.getRequestDispatcher("/views/my-trips.jsp").forward(request, response);
+                    return;
+                } else if (user.getRole().equals("driver")) {
+                    Driver driver = driverDAO.findByUserId(user.getId());
+                    List<SafariSchedule> myTrips = (driver != null) ? scheduleDAO.findByDriverId(driver.getId()) : new java.util.ArrayList<>();
+                    request.setAttribute("myTrips", myTrips);
+                    request.setAttribute("roleLabel", "Driver");
+                    request.getRequestDispatcher("/views/my-trips.jsp").forward(request, response);
+                    return;
+                } else {
+                    response.sendError(HttpServletResponse.SC_FORBIDDEN, "Only guides/drivers can view their own trips this way");
+                    return;
+                }
+            }
+
+            if (!(user.getRole().equals("admin") || user.getRole().equals("manager"))) {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN, "Only managers/admins can manage schedules");
+                return;
+            }
+
+            String action = request.getParameter("action");
+
             if ("complete".equals(action)) {
                 int id = Integer.parseInt(request.getParameter("id"));
                 scheduleDAO.updateStatus(id, "completed");
@@ -53,7 +79,6 @@ public class ScheduleServlet extends HttpServlet {
                 return;
             }
 
-            // Load everything needed for the "create schedule" form
             List<Booking> unscheduledBookings = bookingDAO.findUnscheduledBookings();
             List<Guide> guides = guideDAO.findAll();
             List<Driver> drivers = driverDAO.findAll();
@@ -98,11 +123,10 @@ public class ScheduleServlet extends HttpServlet {
             Integer driverId = (driverIdParam != null && !driverIdParam.isEmpty()) ? Integer.parseInt(driverIdParam) : null;
             Integer vehicleId = (vehicleIdParam != null && !vehicleIdParam.isEmpty()) ? Integer.parseInt(vehicleIdParam) : null;
 
-            // THE CORE OF THIS MODULE: check for conflicts before saving
             String conflict = scheduleDAO.checkConflict(guideId, driverId, vehicleId, scheduleDate);
             if (conflict != null) {
                 request.setAttribute("conflictError", conflict);
-                doGet(request, response); // reload the form with the error shown
+                doGet(request, response);
                 return;
             }
 
