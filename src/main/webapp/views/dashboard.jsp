@@ -34,32 +34,34 @@
 
     <div class="row mt-4">
         <% if (role.equals("admin")) { %>
-        <div class="col-md-4 mb-3"><div class="card p-3">👥 Manage Users <span class="badge bg-secondary">Coming soon</span></div></div>
-        <div class="col-md-4 mb-3"><div class="card p-3">📊 System Reports <span class="badge bg-secondary">Coming soon</span></div></div>
+            <div class="col-md-4 mb-3"><div class="card p-3">👥 Manage Users <span class="badge bg-secondary">Coming soon</span></div></div>
+            <div class="col-md-4 mb-3"><div class="card p-3">📊 System Reports <span class="badge bg-secondary">Coming soon</span></div></div>
         <% } %>
 
         <% if (role.equals("admin") || role.equals("manager")) { %>
-        <div class="col-md-4 mb-3"><div class="card p-3">🗺️ Manage Packages <span class="badge bg-secondary">Coming soon</span></div></div>
-        <div class="col-md-4 mb-3"><div class="card p-3">🚙 Manage Vehicles & Drivers <span class="badge bg-secondary">Coming soon</span></div></div>
-        <div class="col-md-4 mb-3"><div class="card p-3">📅 Manage Schedules <span class="badge bg-secondary">Coming soon</span></div></div>
+            <div class="col-md-4 mb-3"><a href="${pageContext.request.contextPath}/packages" class="text-decoration-none"><div class="card p-3">🗺️ Manage Packages</div></a></div>
+            <div class="col-md-4 mb-3"><a href="${pageContext.request.contextPath}/vehicles" class="text-decoration-none"><div class="card p-3">🚙 Manage Vehicles</div></a></div>
+            <div class="col-md-4 mb-3"><a href="${pageContext.request.contextPath}/drivers" class="text-decoration-none"><div class="card p-3">🚗 Manage Drivers</div></a></div>
+            <div class="col-md-4 mb-3"><a href="${pageContext.request.contextPath}/guides" class="text-decoration-none"><div class="card p-3">🧭 Manage Guides</div></a></div>
+            <div class="col-md-4 mb-3"><a href="${pageContext.request.contextPath}/schedules" class="text-decoration-none"><div class="card p-3">📅 Manage Schedules</div></a></div>
         <% } %>
 
         <% if (role.equals("tourist")) { %>
-        <div class="col-md-4 mb-3"><div class="card p-3">🔍 Browse Safari Packages <span class="badge bg-secondary">Coming soon</span></div></div>
-        <div class="col-md-4 mb-3"><div class="card p-3">📖 My Bookings <span class="badge bg-secondary">Coming soon</span></div></div>
+            <div class="col-md-4 mb-3"><a href="${pageContext.request.contextPath}/bookings" class="text-decoration-none"><div class="card p-3">🔍 Browse Safari Packages</div></a></div>
+            <div class="col-md-4 mb-3"><a href="${pageContext.request.contextPath}/bookings?view=mine" class="text-decoration-none"><div class="card p-3">📖 My Bookings</div></a></div>
         <% } %>
 
         <% if (role.equals("guide")) { %>
-        <div class="col-md-4 mb-3"><div class="card p-3">🐘 Log Wildlife Sighting <span class="badge bg-secondary">Coming soon</span></div></div>
-        <div class="col-md-4 mb-3"><div class="card p-3">📋 My Assigned Trips <span class="badge bg-secondary">Coming soon</span></div></div>
+            <div class="col-md-4 mb-3"><a href="${pageContext.request.contextPath}/sightings" class="text-decoration-none"><div class="card p-3">🐘 Log Wildlife Sighting</div></a></div>
+            <div class="col-md-4 mb-3"><a href="${pageContext.request.contextPath}/schedules?view=mine" class="text-decoration-none"><div class="card p-3">📋 My Assigned Trips</div></a></div>
         <% } %>
 
         <% if (role.equals("driver")) { %>
-        <div class="col-md-4 mb-3"><div class="card p-3">🚗 My Schedule <span class="badge bg-secondary">Coming soon</span></div></div>
+            <div class="col-md-4 mb-3"><a href="${pageContext.request.contextPath}/schedules?view=mine" class="text-decoration-none"><div class="card p-3">🚗 My Schedule</div></a></div>
         <% } %>
 
         <% if (role.equals("support_officer")) { %>
-        <div class="col-md-4 mb-3"><div class="card p-3">💬 Support Requests <span class="badge bg-secondary">Coming soon</span></div></div>
+            <div class="col-md-4 mb-3"><div class="card p-3">💬 Support Requests <span class="badge bg-secondary">Coming soon</span></div></div>
         <% } %>
     </div>
 </div>
