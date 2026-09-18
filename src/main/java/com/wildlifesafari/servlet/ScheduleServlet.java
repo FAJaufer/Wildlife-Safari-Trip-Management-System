@@ -79,6 +79,13 @@ public class ScheduleServlet extends HttpServlet {
                 return;
             }
 
+            if ("delete".equals(action)) {
+                int id = Integer.parseInt(request.getParameter("id"));
+                scheduleDAO.delete(id);
+                response.sendRedirect(request.getContextPath() + "/schedules");
+                return;
+            }
+
             List<Booking> unscheduledBookings = bookingDAO.findUnscheduledBookings();
             List<Guide> guides = guideDAO.findAll();
             List<Driver> drivers = driverDAO.findAll();
@@ -116,8 +123,14 @@ public class ScheduleServlet extends HttpServlet {
             String guideIdParam = request.getParameter("guideId");
             String driverIdParam = request.getParameter("driverId");
             String vehicleIdParam = request.getParameter("vehicleId");
-            Date scheduleDate = Date.valueOf(request.getParameter("scheduleDate"));
-            String scheduleTime = request.getParameter("scheduleTime");
+
+            Booking booking = bookingDAO.findById(bookingId);
+            if (booking == null) {
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Booking not found");
+                return;
+            }
+            Date scheduleDate = booking.getSafariDate();
+            String scheduleTime = booking.getTimeSlot();
 
             Integer guideId = (guideIdParam != null && !guideIdParam.isEmpty()) ? Integer.parseInt(guideIdParam) : null;
             Integer driverId = (driverIdParam != null && !driverIdParam.isEmpty()) ? Integer.parseInt(driverIdParam) : null;

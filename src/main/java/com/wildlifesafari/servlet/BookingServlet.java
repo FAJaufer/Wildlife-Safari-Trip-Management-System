@@ -2,6 +2,7 @@ package com.wildlifesafari.servlet;
 
 import com.wildlifesafari.dao.BookingDAO;
 import com.wildlifesafari.dao.SafariPackageDAO;
+import com.wildlifesafari.dao.SafariScheduleDAO;
 import com.wildlifesafari.model.Booking;
 import com.wildlifesafari.model.SafariPackage;
 import com.wildlifesafari.model.User;
@@ -24,6 +25,7 @@ public class BookingServlet extends HttpServlet {
 
     private final BookingDAO bookingDAO = new BookingDAO();
     private final SafariPackageDAO packageDAO = new SafariPackageDAO();
+    private final SafariScheduleDAO scheduleDAO = new SafariScheduleDAO();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -40,6 +42,17 @@ public class BookingServlet extends HttpServlet {
         String action = request.getParameter("action");
 
         try {
+            if ("checkAvailability".equals(action)) {
+                Date safariDate = Date.valueOf(request.getParameter("safariDate"));
+                String timeSlot = request.getParameter("timeSlot");
+
+                boolean available = scheduleDAO.isSlotAvailable(safariDate, timeSlot);
+
+                response.setContentType("text/plain");
+                response.getWriter().write(available ? "available" : "full");
+                return;
+            }
+
             if ("cancel".equals(action)) {
                 int id = Integer.parseInt(request.getParameter("id"));
                 bookingDAO.updateStatus(id, "cancelled");
@@ -93,6 +106,14 @@ public class BookingServlet extends HttpServlet {
             SafariPackage pkg = packageDAO.findById(packageId);
             if (pkg == null || !"available".equals(pkg.getAvailabilityStatus())) {
                 response.sendRedirect(request.getContextPath() + "/bookings?error=unavailable");
+                return;
+            }
+
+            // Safety-net check: re-verify resource availability server-side,
+            // even though the client already checked via AJAX (never trust the client alone).
+            if (!scheduleDAO.isSlotAvailable(safariDate, timeSlot)) {
+                response.sendRedirect(request.getContextPath()
+                        + "/bookings?action=book&packageId=" + packageId + "&error=full");
                 return;
             }
 

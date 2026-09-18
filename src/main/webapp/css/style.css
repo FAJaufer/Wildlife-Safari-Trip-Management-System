@@ -1,0 +1,464 @@
+/* ==========================================================================
+   Wildlife Safari Trip Management System
+   Sophisticated Eco-Safari Design System
+   Palette: Deep Forest (#183B2B), Warm Ivory (#F7F4ED), Sand (#D8C3A5),
+            Sunset Amber (#D98B3A), Charcoal (#242A25), Sage (#71856A)
+   Typography: Headings -> Playfair Display, Body/UI -> Poppins
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,600&family=Poppins:wght@300;400;500;600;700&display=swap');
+
+:root {
+    --safari-forest: #183B2B;
+    --safari-forest-dark: #0f271c;
+    --safari-forest-light: #255740;
+    --safari-forest-subtle: #e8eee9;
+    --safari-sand: #D8C3A5;
+    --safari-sand-light: #f5efe6;
+    --safari-amber: #D98B3A;
+    --safari-amber-hover: #c27627;
+    --safari-amber-subtle: #fbf1e6;
+    --safari-ivory: #F7F4ED;
+    --safari-ivory-card: #FFFFFF;
+    --safari-charcoal: #242A25;
+    --safari-charcoal-muted: #5e6660;
+    --safari-sage: #71856A;
+    --safari-sage-subtle: #eef2ed;
+    --safari-border: rgba(36, 42, 37, 0.09);
+    --safari-border-light: rgba(216, 195, 165, 0.4);
+    --safari-shadow-sm: 0 2px 8px rgba(24, 59, 43, 0.05);
+    --safari-shadow-md: 0 8px 24px rgba(24, 59, 43, 0.08);
+    --safari-shadow-lg: 0 16px 40px rgba(24, 59, 43, 0.12);
+    --safari-radius-sm: 8px;
+    --safari-radius-md: 12px;
+    --safari-radius-lg: 16px;
+    --safari-radius-xl: 24px;
+}
+
+/* Base & Typography */
+body {
+    background-color: var(--safari-ivory);
+    color: var(--safari-charcoal);
+    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, .font-heading {
+    font-family: 'Playfair Display', Georgia, serif;
+    color: var(--safari-forest);
+    font-weight: 700;
+    letter-spacing: -0.015em;
+}
+
+h5, h6 {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    color: var(--safari-forest);
+}
+
+a {
+    color: var(--safari-forest);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+a:hover {
+    color: var(--safari-amber);
+}
+
+/* ==========================================================================
+   Navigation
+   ========================================================================== */
+.safari-navbar {
+    background: #ffffff;
+    border-bottom: 1px solid var(--safari-border);
+    padding: 0.85rem 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.safari-navbar .navbar-brand {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--safari-forest) !important;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.safari-navbar .navbar-brand .brand-badge {
+    color: var(--safari-amber);
+    font-size: 1.25rem;
+}
+
+.safari-navbar .nav-link {
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--safari-charcoal) !important;
+    padding: 0.5rem 0.9rem;
+    border-radius: var(--safari-radius-sm);
+    transition: all 0.2s ease;
+}
+
+.safari-navbar .nav-link:hover,
+.safari-navbar .nav-link.active {
+    color: var(--safari-forest) !important;
+    background-color: var(--safari-sand-light);
+}
+
+.safari-navbar-dark {
+    background: var(--safari-forest);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.safari-navbar-dark .navbar-brand {
+    color: var(--safari-ivory) !important;
+}
+
+.safari-navbar-dark .nav-link {
+    color: rgba(247, 244, 237, 0.85) !important;
+}
+
+.safari-navbar-dark .nav-link:hover,
+.safari-navbar-dark .nav-link.active {
+    color: #ffffff !important;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* ==========================================================================
+   Buttons
+   ========================================================================== */
+.btn-safari-primary {
+    background-color: var(--safari-forest);
+    color: var(--safari-ivory);
+    font-weight: 500;
+    padding: 0.6rem 1.4rem;
+    border-radius: var(--safari-radius-md);
+    border: 1px solid var(--safari-forest);
+    transition: all 0.25s ease;
+}
+
+.btn-safari-primary:hover,
+.btn-safari-primary:focus {
+    background-color: var(--safari-forest-dark);
+    color: #ffffff;
+    border-color: var(--safari-forest-dark);
+    box-shadow: 0 4px 12px rgba(24, 59, 43, 0.25);
+    transform: translateY(-1px);
+}
+
+.btn-safari-amber {
+    background-color: var(--safari-amber);
+    color: #ffffff;
+    font-weight: 600;
+    padding: 0.6rem 1.4rem;
+    border-radius: var(--safari-radius-md);
+    border: 1px solid var(--safari-amber);
+    box-shadow: 0 4px 14px rgba(217, 139, 58, 0.25);
+    transition: all 0.25s ease;
+}
+
+.btn-safari-amber:hover,
+.btn-safari-amber:focus {
+    background-color: var(--safari-amber-hover);
+    color: #ffffff;
+    border-color: var(--safari-amber-hover);
+    box-shadow: 0 6px 18px rgba(217, 139, 58, 0.35);
+    transform: translateY(-1px);
+}
+
+.btn-safari-outline {
+    background-color: transparent;
+    color: var(--safari-forest);
+    font-weight: 500;
+    padding: 0.55rem 1.35rem;
+    border-radius: var(--safari-radius-md);
+    border: 1.5px solid var(--safari-forest);
+    transition: all 0.25s ease;
+}
+
+.btn-safari-outline:hover,
+.btn-safari-outline:focus {
+    background-color: var(--safari-forest);
+    color: var(--safari-ivory);
+    transform: translateY(-1px);
+}
+
+.btn-safari-outline-light {
+    background-color: transparent;
+    color: var(--safari-ivory);
+    font-weight: 500;
+    padding: 0.55rem 1.35rem;
+    border-radius: var(--safari-radius-md);
+    border: 1.5px solid rgba(247, 244, 237, 0.6);
+    transition: all 0.25s ease;
+}
+
+.btn-safari-outline-light:hover {
+    background-color: var(--safari-ivory);
+    color: var(--safari-forest);
+    border-color: var(--safari-ivory);
+}
+
+/* ==========================================================================
+   Cards & Content Blocks
+   ========================================================================== */
+.safari-card {
+    background-color: #ffffff;
+    border: 1px solid var(--safari-border);
+    border-radius: var(--safari-radius-md);
+    box-shadow: var(--safari-shadow-sm);
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    overflow: hidden;
+}
+
+.safari-card:hover {
+    box-shadow: var(--safari-shadow-md);
+    border-color: var(--safari-sand);
+    transform: translateY(-3px);
+}
+
+.safari-card-static {
+    background-color: #ffffff;
+    border: 1px solid var(--safari-border);
+    border-radius: var(--safari-radius-md);
+    box-shadow: var(--safari-shadow-sm);
+}
+
+.safari-stat-card {
+    background-color: #ffffff;
+    border: 1px solid var(--safari-border);
+    border-radius: var(--safari-radius-md);
+    box-shadow: var(--safari-shadow-sm);
+    padding: 1.5rem;
+    border-left: 4px solid var(--safari-amber);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.safari-stat-card:hover {
+    box-shadow: var(--safari-shadow-md);
+    transform: translateY(-2px);
+}
+
+.safari-stat-card.stat-forest {
+    border-left-color: var(--safari-forest);
+}
+
+.safari-stat-card.stat-sage {
+    border-left-color: var(--safari-sage);
+}
+
+.safari-stat-card.stat-sand {
+    border-left-color: var(--safari-sand);
+}
+
+/* ==========================================================================
+   Hero Section
+   ========================================================================== */
+.safari-hero {
+    position: relative;
+    background: linear-gradient(180deg, rgba(24, 59, 43, 0.72) 0%, rgba(15, 39, 28, 0.88) 100%),
+                url('https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=1920&q=80') center center / cover no-repeat;
+    min-height: 82vh;
+    display: flex;
+    align-items: center;
+    color: var(--safari-ivory);
+    padding: 5rem 0 7rem 0;
+}
+
+.safari-hero-heading {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: clamp(2.5rem, 5.5vw, 4.2rem);
+    font-weight: 800;
+    color: #ffffff;
+    line-height: 1.15;
+    margin-bottom: 1.25rem;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.safari-hero-lead {
+    font-family: 'Poppins', sans-serif;
+    font-size: clamp(1.1rem, 2vw, 1.35rem);
+    font-weight: 300;
+    color: var(--safari-sand-light);
+    max-width: 620px;
+    margin-bottom: 2rem;
+    letter-spacing: 0.02em;
+}
+
+.safari-floating-search {
+    margin-top: -3.5rem;
+    position: relative;
+    z-index: 10;
+}
+
+.safari-search-box {
+    background: #ffffff;
+    border-radius: var(--safari-radius-lg);
+    box-shadow: 0 12px 35px rgba(24, 59, 43, 0.12);
+    border: 1px solid var(--safari-border);
+    padding: 1.75rem 2rem;
+}
+
+/* ==========================================================================
+   Badges, Accents & Motifs
+   ========================================================================== */
+.safari-badge-amber {
+    background-color: var(--safari-amber-subtle);
+    color: var(--safari-amber-hover);
+    font-weight: 600;
+    border-radius: 30px;
+    padding: 0.35rem 0.85rem;
+    font-size: 0.8rem;
+    letter-spacing: 0.02em;
+    border: 1px solid rgba(217, 139, 58, 0.2);
+}
+
+.safari-badge-forest {
+    background-color: var(--safari-forest-subtle);
+    color: var(--safari-forest);
+    font-weight: 600;
+    border-radius: 30px;
+    padding: 0.35rem 0.85rem;
+    font-size: 0.8rem;
+    border: 1px solid rgba(24, 59, 43, 0.15);
+}
+
+.safari-badge-sand {
+    background-color: var(--safari-sand-light);
+    color: #7d6342;
+    font-weight: 600;
+    border-radius: 30px;
+    padding: 0.35rem 0.85rem;
+    font-size: 0.8rem;
+}
+
+.safari-badge-sage {
+    background-color: var(--safari-sage-subtle);
+    color: var(--safari-sage);
+    font-weight: 600;
+    border-radius: 30px;
+    padding: 0.35rem 0.85rem;
+    font-size: 0.8rem;
+}
+
+.safari-price-tag {
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--safari-amber);
+}
+
+.safari-paw-icon {
+    display: inline-block;
+    color: var(--safari-amber);
+    margin-right: 0.4rem;
+}
+
+.safari-divider-route {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    color: var(--safari-sand);
+    margin: 2.5rem 0;
+}
+
+.safari-divider-route::before,
+.safari-divider-route::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1.5px dashed var(--safari-sand);
+}
+
+.safari-divider-route:not(:empty)::before {
+    margin-right: 1.25em;
+}
+
+.safari-divider-route:not(:empty)::after {
+    margin-left: 1.25em;
+}
+
+/* ==========================================================================
+   Tables & Forms
+   ========================================================================== */
+.table-safari {
+    background-color: #ffffff;
+    border-radius: var(--safari-radius-md);
+    overflow: hidden;
+    border: 1px solid var(--safari-border);
+}
+
+.table-safari thead {
+    background-color: var(--safari-forest-subtle);
+    color: var(--safari-forest);
+    font-weight: 600;
+    font-size: 0.88rem;
+}
+
+.table-safari th {
+    padding: 1rem 1.2rem;
+    border: none;
+}
+
+.table-safari td {
+    padding: 1rem 1.2rem;
+    vertical-align: middle;
+    border-top: 1px solid var(--safari-border);
+}
+
+.table-safari tbody tr:hover {
+    background-color: var(--safari-sand-light);
+}
+
+.form-control, .form-select {
+    border: 1.5px solid rgba(36, 42, 37, 0.15);
+    border-radius: var(--safari-radius-sm);
+    padding: 0.65rem 0.95rem;
+    font-size: 0.95rem;
+    color: var(--safari-charcoal);
+    background-color: #ffffff;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--safari-forest);
+    box-shadow: 0 0 0 0.25rem rgba(24, 59, 43, 0.12);
+}
+
+/* ==========================================================================
+   Footer
+   ========================================================================== */
+.safari-footer {
+    background-color: var(--safari-forest-dark);
+    color: rgba(247, 244, 237, 0.75);
+    padding: 4rem 0 2rem 0;
+    border-top: 3px solid var(--safari-amber);
+    margin-top: 4rem;
+}
+
+.safari-footer h5, .safari-footer h6 {
+    color: #ffffff;
+    font-family: 'Playfair Display', Georgia, serif;
+    margin-bottom: 1.2rem;
+}
+
+.safari-footer a {
+    color: rgba(247, 244, 237, 0.75);
+    transition: color 0.2s ease;
+}
+
+.safari-footer a:hover {
+    color: var(--safari-sand);
+}
+
+.safari-footer-bottom {
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding-top: 1.75rem;
+    margin-top: 3rem;
+    font-size: 0.85rem;
+}

@@ -8,6 +8,7 @@
     <display-name>Wildlife Safari Trip Management System</display-name>
 
     <welcome-file-list>
+        <welcome-file>index.jsp</welcome-file>
         <welcome-file>views/login.jsp</welcome-file>
     </welcome-file-list>
 
