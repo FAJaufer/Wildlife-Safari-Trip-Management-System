@@ -33,6 +33,9 @@
                 <li class="nav-item">
                     <a class="nav-link" href="${pageContext.request.contextPath}/bookings?view=mine"><i class="bi bi-ticket-detailed me-1"></i> My Bookings</a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="${pageContext.request.contextPath}/support"><i class="bi bi-chat-dots me-1"></i> Support</a>
+                </li>
                 <% } else if ("guide".equals(navRole)) { %>
                 <li class="nav-item">
                     <a class="nav-link" href="${pageContext.request.contextPath}/sightings"><i class="bi bi-camera me-1"></i> Sightings</a>
@@ -40,9 +43,22 @@
                 <li class="nav-item">
                     <a class="nav-link" href="${pageContext.request.contextPath}/schedules?view=mine"><i class="bi bi-calendar-check me-1"></i> My Trips</a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="${pageContext.request.contextPath}/emergencies"><i class="bi bi-exclamation-octagon me-1"></i> Emergencies</a>
+                </li>
                 <% } else if ("driver".equals(navRole)) { %>
                 <li class="nav-item">
                     <a class="nav-link" href="${pageContext.request.contextPath}/schedules?view=mine"><i class="bi bi-truck me-1"></i> My Schedule</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="${pageContext.request.contextPath}/emergencies"><i class="bi bi-exclamation-octagon me-1"></i> Emergencies</a>
+                </li>
+                <% } else if ("support_officer".equals(navRole)) { %>
+                <li class="nav-item">
+                    <a class="nav-link" href="${pageContext.request.contextPath}/support"><i class="bi bi-chat-dots me-1"></i> Support Requests</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="${pageContext.request.contextPath}/emergencies"><i class="bi bi-exclamation-octagon me-1"></i> Emergencies</a>
                 </li>
                 <% } else if ("admin".equals(navRole) || "manager".equals(navRole)) { %>
                 <li class="nav-item dropdown">
@@ -55,6 +71,9 @@
                         <li><a class="dropdown-item" href="${pageContext.request.contextPath}/vehicles">Vehicles</a></li>
                         <li><a class="dropdown-item" href="${pageContext.request.contextPath}/drivers">Drivers</a></li>
                         <li><a class="dropdown-item" href="${pageContext.request.contextPath}/guides">Guides</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="${pageContext.request.contextPath}/support">Support Requests</a></li>
+                        <li><a class="dropdown-item" href="${pageContext.request.contextPath}/emergencies">Emergency Reports</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="${pageContext.request.contextPath}/payments">Payment Records</a></li>
                     </ul>
