@@ -119,6 +119,16 @@ public class SafariScheduleDAO {
         }
     }
 
+    public void delete(int id) throws SQLException {
+        String sql = "DELETE FROM safari_schedules WHERE id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, id);
+            stmt.executeUpdate();
+        }
+    }
+
     public List<SafariSchedule> findByDriverId(int driverId) throws SQLException {
         List<SafariSchedule> schedules = new ArrayList<>();
         String sql = SELECT_BASE + "WHERE s.driver_id = ? AND s.trip_status = 'scheduled' ORDER BY s.schedule_date ASC";
@@ -134,6 +144,54 @@ public class SafariScheduleDAO {
             }
         }
         return schedules;
+    }
+
+    public boolean isSlotAvailable(java.sql.Date date, String timeSlot) throws SQLException {
+        int availableGuides = countAvailable(
+                "SELECT COUNT(*) FROM guides WHERE employment_status = 'active'",
+                date, timeSlot, "guide_id"
+        );
+        int availableDrivers = countAvailable(
+                "SELECT COUNT(*) FROM drivers WHERE employment_status = 'active'",
+                date, timeSlot, "driver_id"
+        );
+        int availableVehicles = countAvailable(
+                "SELECT COUNT(*) FROM vehicles WHERE maintenance_status = 'active'",
+                date, timeSlot, "vehicle_id"
+        );
+
+        return availableGuides > 0 && availableDrivers > 0 && availableVehicles > 0;
+    }
+
+    private int countAvailable(String totalCountSql, java.sql.Date date, String timeSlot, String resourceColumn) throws SQLException {
+        int total = 0;
+        int busy = 0;
+
+        try (Connection conn = DBConnection.getConnection()) {
+
+            try (PreparedStatement stmt = conn.prepareStatement(totalCountSql);
+                 ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    total = rs.getInt(1);
+                }
+            }
+
+            String busySql = "SELECT COUNT(DISTINCT " + resourceColumn + ") FROM safari_schedules " +
+                    "WHERE schedule_date = ? AND schedule_time = ? " +
+                    "AND trip_status != 'cancelled' AND " + resourceColumn + " IS NOT NULL";
+
+            try (PreparedStatement stmt = conn.prepareStatement(busySql)) {
+                stmt.setDate(1, date);
+                stmt.setString(2, timeSlot);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        busy = rs.getInt(1);
+                    }
+                }
+            }
+        }
+
+        return total - busy;
     }
 
     private SafariSchedule mapRow(ResultSet rs) throws SQLException {

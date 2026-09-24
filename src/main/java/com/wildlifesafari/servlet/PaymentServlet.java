@@ -16,13 +16,19 @@ import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.SQLException;
+import java.time.YearMonth;
 import java.util.List;
+import java.util.regex.Pattern;
 
 @WebServlet("/payments")
 public class PaymentServlet extends HttpServlet {
 
     private final PaymentDAO paymentDAO = new PaymentDAO();
     private final BookingDAO bookingDAO = new BookingDAO();
+
+    private static final Pattern CARD_NUMBER_PATTERN = Pattern.compile("^\\d{16}$");
+    private static final Pattern CVV_PATTERN = Pattern.compile("^\\d{3}$");
+    private static final Pattern EXPIRY_PATTERN = Pattern.compile("^(0[1-9]|1[0-2])/\\d{2}$");
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -48,7 +54,6 @@ public class PaymentServlet extends HttpServlet {
 
                 Payment existing = paymentDAO.findByBookingId(bookingId);
                 if (existing != null) {
-                    // already paid — just show the receipt again
                     request.setAttribute("payment", existing);
                     request.setAttribute("booking", booking);
                     request.getRequestDispatcher("/views/receipt.jsp").forward(request, response);
@@ -60,7 +65,6 @@ public class PaymentServlet extends HttpServlet {
                 return;
             }
 
-            // Default: admin/manager view of all payments + revenue
             if (!(user.getRole().equals("admin") || user.getRole().equals("manager"))) {
                 response.sendError(HttpServletResponse.SC_FORBIDDEN, "Only managers/admins can view all payments");
                 return;
@@ -100,6 +104,30 @@ public class PaymentServlet extends HttpServlet {
                 return;
             }
 
+            // Server-side validation — never trust the client-side JS alone.
+            // Card details are validated for format only and never persisted anywhere.
+            if ("credit_card".equals(paymentMethod) || "debit_card".equals(paymentMethod)) {
+
+                String cardNumberRaw = request.getParameter("cardNumber");
+                String cardNumberDigits = (cardNumberRaw != null) ? cardNumberRaw.replaceAll("\\s+", "") : "";
+                if (!CARD_NUMBER_PATTERN.matcher(cardNumberDigits).matches()) {
+                    redirectWithError(request, response, bookingId, "card");
+                    return;
+                }
+
+                String cvv = request.getParameter("cvv");
+                if (cvv == null || !CVV_PATTERN.matcher(cvv).matches()) {
+                    redirectWithError(request, response, bookingId, "cvv");
+                    return;
+                }
+
+                String expiry = request.getParameter("expiryDate");
+                if (expiry == null || !EXPIRY_PATTERN.matcher(expiry).matches() || !isFutureExpiry(expiry)) {
+                    redirectWithError(request, response, bookingId, "expiry");
+                    return;
+                }
+            }
+
             Payment p = new Payment();
             p.setBookingId(bookingId);
             p.setAmount(booking.getTotalCost());
@@ -113,5 +141,23 @@ public class PaymentServlet extends HttpServlet {
             e.printStackTrace();
             throw new ServletException("Database error processing payment", e);
         }
+    }
+
+    private boolean isFutureExpiry(String expiry) {
+        try {
+            String[] parts = expiry.split("/");
+            int month = Integer.parseInt(parts[0]);
+            int year = 2000 + Integer.parseInt(parts[1]);
+            YearMonth expiryMonth = YearMonth.of(year, month);
+            return !expiryMonth.isBefore(YearMonth.now());
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private void redirectWithError(HttpServletRequest request, HttpServletResponse response,
+                                   int bookingId, String errorCode) throws IOException {
+        response.sendRedirect(request.getContextPath()
+                + "/payments?action=pay&bookingId=" + bookingId + "&error=" + errorCode);
     }
 }
