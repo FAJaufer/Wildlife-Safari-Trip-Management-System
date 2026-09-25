@@ -2,6 +2,7 @@
 <%@ page import="com.wildlifesafari.model.User" %>
 <%@ page import="com.wildlifesafari.model.Booking" %>
 <%@ page import="java.util.List" %>
+<%@ page import="java.util.Set" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -22,6 +23,8 @@
         return;
     }
     List<Booking> bookings = (List<Booking>) request.getAttribute("bookings");
+    Set<Integer> paidBookingIds = (Set<Integer>) request.getAttribute("paidBookingIds");
+    if (paidBookingIds == null) { paidBookingIds = new java.util.HashSet<>(); }
 %>
 
 <jsp:include page="/views/common/navbar.jsp" />
@@ -102,14 +105,23 @@
                                     } else {
                                         badgeClass = "safari-badge-amber";
                                     }
+                                    boolean isPaid = paidBookingIds.contains(b.getId());
                                 %>
                                 <span class="<%= badgeClass %> text-uppercase"><%= b.getStatus() %></span>
+                                <% if (isPaid) { %>
+                                <span class="safari-badge-sage text-uppercase ms-1"><i class="bi bi-check-circle-fill me-1"></i>Paid</span>
+                                <% } %>
                             </td>
                             <td class="text-end pe-4">
+                                <% boolean paid = paidBookingIds.contains(b.getId()); %>
+                                <% if (paid) { %>
                                 <a href="${pageContext.request.contextPath}/payments?action=pay&bookingId=<%= b.getId() %>" class="btn btn-sm btn-safari-outline me-1">
-                                    💳 Pay / Receipt
+                                    <i class="bi bi-receipt me-1"></i>View Receipt
                                 </a>
-                                <% if ("confirmed".equals(b.getStatus())) { %>
+                                <% } else if ("confirmed".equals(b.getStatus())) { %>
+                                <a href="${pageContext.request.contextPath}/payments?action=pay&bookingId=<%= b.getId() %>" class="btn btn-sm btn-safari-amber me-1">
+                                    <i class="bi bi-credit-card me-1"></i>Pay Now
+                                </a>
                                 <a href="${pageContext.request.contextPath}/bookings?action=cancel&id=<%= b.getId() %>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Cancel this booking?')">
                                     Cancel
                                 </a>

@@ -44,6 +44,25 @@ public class PaymentDAO {
         return null;
     }
 
+    public java.util.Set<Integer> findPaidBookingIds(int userId) throws SQLException {
+        java.util.Set<Integer> paidIds = new java.util.HashSet<>();
+        String sql = "SELECT pay.booking_id FROM payments pay " +
+                "JOIN bookings b ON pay.booking_id = b.id " +
+                "WHERE b.user_id = ? AND pay.status = 'success'";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, userId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    paidIds.add(rs.getInt("booking_id"));
+                }
+            }
+        }
+        return paidIds;
+    }
+
     public void create(Payment p) throws SQLException {
         String sql = "INSERT INTO payments (booking_id, amount, payment_method, status) VALUES (?, ?, ?, 'success')";
         try (Connection conn = DBConnection.getConnection();

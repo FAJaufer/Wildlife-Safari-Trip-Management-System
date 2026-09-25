@@ -70,7 +70,9 @@ public class BookingServlet extends HttpServlet {
 
             if ("mine".equals(request.getParameter("view"))) {
                 List<Booking> myBookings = bookingDAO.findByUserId(user.getId());
+                java.util.Set<Integer> paidBookingIds = new com.wildlifesafari.dao.PaymentDAO().findPaidBookingIds(user.getId());
                 request.setAttribute("bookings", myBookings);
+                request.setAttribute("paidBookingIds", paidBookingIds);
                 request.getRequestDispatcher("/views/my-bookings.jsp").forward(request, response);
                 return;
             }
