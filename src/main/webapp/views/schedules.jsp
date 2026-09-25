@@ -53,6 +53,13 @@
         </div>
         <% } %>
 
+        <% if (request.getParameter("reassigned") != null) { %>
+        <div class="alert alert-success d-flex align-items-center gap-2">
+            <i class="bi bi-check-circle-fill"></i>
+            <div>Resources reassigned successfully!</div>
+        </div>
+        <% } %>
+
         <div class="safari-card-static p-4 mb-4">
             <h5 class="fw-bold mb-3"><i class="bi bi-plus-circle me-2"></i>Create New Schedule</h5>
             <p class="text-muted small mb-3"><i class="bi bi-info-circle me-1"></i>Date and time are taken automatically from the selected booking.</p>
@@ -144,6 +151,14 @@
                     </td>
                     <td>
                         <% if ("scheduled".equals(s.getTripStatus())) { %>
+                        <% boolean hasIssue = (s.getGuideId() != null && (!"available".equals(s.getGuideAvailability()) || !"active".equals(s.getGuideEmployment())))
+                                || (s.getDriverId() != null && (!"available".equals(s.getDriverAvailability()) || !"active".equals(s.getDriverEmployment())))
+                                || (s.getVehicleId() != null && (!"available".equals(s.getVehicleAvailability()) || !"active".equals(s.getVehicleMaintenance()))); %>
+                        <% if (hasIssue) { %>
+                        <a href="${pageContext.request.contextPath}/schedules?action=reassign&id=<%= s.getId() %>" class="btn btn-sm btn-warning fw-semibold">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i> Reassign
+                        </a>
+                        <% } %>
                         <a href="${pageContext.request.contextPath}/schedules?action=complete&id=<%= s.getId() %>" class="btn btn-sm btn-safari-outline">Complete</a>
                         <a href="${pageContext.request.contextPath}/schedules?action=cancel&id=<%= s.getId() %>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Cancel this schedule?')">Cancel</a>
                         <% } %>

@@ -24,6 +24,21 @@ public class VehicleDAO {
         return vehicles;
     }
 
+    public List<Vehicle> findAvailable() throws SQLException {
+        List<Vehicle> vehicles = new ArrayList<>();
+        String sql = "SELECT * FROM vehicles WHERE availability_status = 'available' AND maintenance_status = 'active' ORDER BY id DESC";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                vehicles.add(mapRow(rs));
+            }
+        }
+        return vehicles;
+    }
+
     public Vehicle findById(int id) throws SQLException {
         String sql = "SELECT * FROM vehicles WHERE id = ?";
         try (Connection conn = DBConnection.getConnection();

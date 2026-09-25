@@ -86,10 +86,35 @@ public class ScheduleServlet extends HttpServlet {
                 return;
             }
 
+            if ("reassign".equals(action)) {
+                int id = Integer.parseInt(request.getParameter("id"));
+                List<SafariSchedule> allSchedules = scheduleDAO.findAll();
+                SafariSchedule target = allSchedules.stream()
+                        .filter(s -> s.getId() == id)
+                        .findFirst()
+                        .orElse(null);
+
+                if (target == null) {
+                    response.sendError(HttpServletResponse.SC_NOT_FOUND, "Schedule not found");
+                    return;
+                }
+
+                List<Guide> guides = guideDAO.findAvailable();
+                List<Driver> drivers = driverDAO.findAvailable();
+                List<Vehicle> vehicles = vehicleDAO.findAvailable();
+
+                request.setAttribute("reassignTarget", target);
+                request.setAttribute("guides", guides);
+                request.setAttribute("drivers", drivers);
+                request.setAttribute("vehicles", vehicles);
+                request.getRequestDispatcher("/views/reassign.jsp").forward(request, response);
+                return;
+            }
+
             List<Booking> unscheduledBookings = bookingDAO.findUnscheduledBookings();
-            List<Guide> guides = guideDAO.findAll();
-            List<Driver> drivers = driverDAO.findAll();
-            List<Vehicle> vehicles = vehicleDAO.findAll();
+            List<Guide> guides = guideDAO.findAvailable();
+            List<Driver> drivers = driverDAO.findAvailable();
+            List<Vehicle> vehicles = vehicleDAO.findAvailable();
             List<SafariSchedule> schedules = scheduleDAO.findAll();
 
             request.setAttribute("unscheduledBookings", unscheduledBookings);
@@ -118,7 +143,32 @@ public class ScheduleServlet extends HttpServlet {
             return;
         }
 
+        String formType = request.getParameter("formType");
+
         try {
+            if ("reassign".equals(formType)) {
+                int scheduleId = Integer.parseInt(request.getParameter("scheduleId"));
+                String guideIdParam = request.getParameter("guideId");
+                String driverIdParam = request.getParameter("driverId");
+                String vehicleIdParam = request.getParameter("vehicleId");
+                Date scheduleDate = Date.valueOf(request.getParameter("scheduleDate"));
+
+                Integer guideId = (guideIdParam != null && !guideIdParam.isEmpty()) ? Integer.parseInt(guideIdParam) : null;
+                Integer driverId = (driverIdParam != null && !driverIdParam.isEmpty()) ? Integer.parseInt(driverIdParam) : null;
+                Integer vehicleId = (vehicleIdParam != null && !vehicleIdParam.isEmpty()) ? Integer.parseInt(vehicleIdParam) : null;
+
+                String conflict = scheduleDAO.checkConflict(guideId, driverId, vehicleId, scheduleDate, scheduleId);
+                if (conflict != null) {
+                    request.setAttribute("conflictError", conflict);
+                    response.sendRedirect(request.getContextPath() + "/schedules?action=reassign&id=" + scheduleId);
+                    return;
+                }
+
+                scheduleDAO.updateResources(scheduleId, guideId, driverId, vehicleId);
+                response.sendRedirect(request.getContextPath() + "/schedules?reassigned=1");
+                return;
+            }
+
             int bookingId = Integer.parseInt(request.getParameter("bookingId"));
             String guideIdParam = request.getParameter("guideId");
             String driverIdParam = request.getParameter("driverId");
@@ -158,7 +208,7 @@ public class ScheduleServlet extends HttpServlet {
 
         } catch (SQLException e) {
             e.printStackTrace();
-            throw new ServletException("Database error creating schedule", e);
+            throw new ServletException("Database error saving schedule", e);
         }
     }
 }

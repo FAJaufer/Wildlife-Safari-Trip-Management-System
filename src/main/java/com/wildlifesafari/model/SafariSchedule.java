@@ -39,6 +39,30 @@ public class SafariSchedule {
         this.tripStatus = tripStatus;
     }
 
+    private String guideAvailability;
+    private String guideEmployment;
+    private String driverAvailability;
+    private String driverEmployment;
+    private String vehicleAvailability;
+    private String vehicleMaintenance;
+
+    public String getGuideAvailability() { return guideAvailability; }
+    public void setGuideAvailability(String guideAvailability) { this.guideAvailability = guideAvailability; }
+
+    public String getGuideEmployment() { return guideEmployment; }
+    public void setGuideEmployment(String guideEmployment) { this.guideEmployment = guideEmployment; }
+
+    public String getDriverAvailability() { return driverAvailability; }
+    public void setDriverAvailability(String driverAvailability) { this.driverAvailability = driverAvailability; }
+
+    public String getDriverEmployment() { return driverEmployment; }
+    public void setDriverEmployment(String driverEmployment) { this.driverEmployment = driverEmployment; }
+
+    public String getVehicleAvailability() { return vehicleAvailability; }
+    public void setVehicleAvailability(String vehicleAvailability) { this.vehicleAvailability = vehicleAvailability; }
+
+    public String getVehicleMaintenance() { return vehicleMaintenance; }
+    public void setVehicleMaintenance(String vehicleMaintenance) { this.vehicleMaintenance = vehicleMaintenance; }
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
 

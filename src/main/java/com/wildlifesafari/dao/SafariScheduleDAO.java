@@ -11,7 +11,9 @@ public class SafariScheduleDAO {
 
     private static final String SELECT_BASE =
             "SELECT s.*, b.booking_reference, p.safari_type, " +
-                    "gu.name AS guide_name, du.name AS driver_name, v.registration_number " +
+                    "gu.name AS guide_name, g.availability_status AS guide_availability, g.employment_status AS guide_employment, " +
+                    "du.name AS driver_name, d.availability_status AS driver_availability, d.employment_status AS driver_employment, " +
+                    "v.registration_number, v.availability_status AS vehicle_availability, v.maintenance_status AS vehicle_maintenance " +
                     "FROM safari_schedules s " +
                     "JOIN bookings b ON s.booking_id = b.id " +
                     "JOIN safari_packages p ON b.package_id = p.id " +
@@ -36,19 +38,19 @@ public class SafariScheduleDAO {
         return schedules;
     }
 
-    /**
-     * Checks whether the given guide, driver, or vehicle is already assigned
-     * to another ACTIVE schedule (not cancelled) on the same date.
-     * Returns a human-readable conflict message, or null if no conflict.
-     */
     public String checkConflict(Integer guideId, Integer driverId, Integer vehicleId, Date scheduleDate) throws SQLException {
+        return checkConflict(guideId, driverId, vehicleId, scheduleDate, null);
+    }
+
+    public String checkConflict(Integer guideId, Integer driverId, Integer vehicleId, Date scheduleDate, Integer excludeScheduleId) throws SQLException {
         String sql = "SELECT s.id, s.guide_id, s.driver_id, s.vehicle_id, gu.name AS guide_name, du.name AS driver_name, v.registration_number " +
                 "FROM safari_schedules s " +
                 "LEFT JOIN guides g ON s.guide_id = g.id LEFT JOIN users gu ON g.user_id = gu.id " +
                 "LEFT JOIN drivers d ON s.driver_id = d.id LEFT JOIN users du ON d.user_id = du.id " +
                 "LEFT JOIN vehicles v ON s.vehicle_id = v.id " +
                 "WHERE s.schedule_date = ? AND s.trip_status != 'cancelled' " +
-                "AND (s.guide_id = ? OR s.driver_id = ? OR s.vehicle_id = ?)";
+                "AND (s.guide_id = ? OR s.driver_id = ? OR s.vehicle_id = ?)" +
+                (excludeScheduleId != null ? " AND s.id != ?" : "");
 
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -57,6 +59,9 @@ public class SafariScheduleDAO {
             stmt.setObject(2, guideId);
             stmt.setObject(3, driverId);
             stmt.setObject(4, vehicleId);
+            if (excludeScheduleId != null) {
+                stmt.setInt(5, excludeScheduleId);
+            }
 
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
@@ -148,15 +153,15 @@ public class SafariScheduleDAO {
 
     public boolean isSlotAvailable(java.sql.Date date, String timeSlot) throws SQLException {
         int availableGuides = countAvailable(
-                "SELECT COUNT(*) FROM guides WHERE employment_status = 'active'",
+                "SELECT COUNT(*) FROM guides WHERE employment_status = 'active' AND availability_status = 'available'",
                 date, timeSlot, "guide_id"
         );
         int availableDrivers = countAvailable(
-                "SELECT COUNT(*) FROM drivers WHERE employment_status = 'active'",
+                "SELECT COUNT(*) FROM drivers WHERE employment_status = 'active' AND availability_status = 'available'",
                 date, timeSlot, "driver_id"
         );
         int availableVehicles = countAvailable(
-                "SELECT COUNT(*) FROM vehicles WHERE maintenance_status = 'active'",
+                "SELECT COUNT(*) FROM vehicles WHERE maintenance_status = 'active' AND availability_status = 'available'",
                 date, timeSlot, "vehicle_id"
         );
 
@@ -194,6 +199,19 @@ public class SafariScheduleDAO {
         return total - busy;
     }
 
+    public void updateResources(int scheduleId, Integer guideId, Integer driverId, Integer vehicleId) throws SQLException {
+        String sql = "UPDATE safari_schedules SET guide_id = ?, driver_id = ?, vehicle_id = ? WHERE id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setObject(1, guideId);
+            stmt.setObject(2, driverId);
+            stmt.setObject(3, vehicleId);
+            stmt.setInt(4, scheduleId);
+            stmt.executeUpdate();
+        }
+    }
+
     private SafariSchedule mapRow(ResultSet rs) throws SQLException {
         SafariSchedule s = new SafariSchedule();
         s.setId(rs.getInt("id"));
@@ -209,6 +227,12 @@ public class SafariScheduleDAO {
         s.setScheduleDate(rs.getDate("schedule_date"));
         s.setScheduleTime(rs.getString("schedule_time"));
         s.setTripStatus(rs.getString("trip_status"));
+        s.setGuideAvailability(rs.getString("guide_availability"));
+        s.setGuideEmployment(rs.getString("guide_employment"));
+        s.setDriverAvailability(rs.getString("driver_availability"));
+        s.setDriverEmployment(rs.getString("driver_employment"));
+        s.setVehicleAvailability(rs.getString("vehicle_availability"));
+        s.setVehicleMaintenance(rs.getString("vehicle_maintenance"));
         return s;
     }
 }
