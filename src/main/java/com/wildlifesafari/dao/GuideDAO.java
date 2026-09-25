@@ -25,6 +25,24 @@ public class GuideDAO {
         return guides;
     }
 
+    public List<Guide> findAvailable() throws SQLException {
+        List<Guide> guides = new ArrayList<>();
+        String sql = "SELECT g.*, u.name AS guide_name FROM guides g " +
+                "LEFT JOIN users u ON g.user_id = u.id " +
+                "WHERE g.availability_status = 'available' AND g.employment_status = 'active' " +
+                "ORDER BY g.id DESC";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                guides.add(mapRow(rs));
+            }
+        }
+        return guides;
+    }
+
     public Guide findById(int id) throws SQLException {
         String sql = "SELECT g.*, u.name AS guide_name FROM guides g " +
                 "LEFT JOIN users u ON g.user_id = u.id WHERE g.id = ?";

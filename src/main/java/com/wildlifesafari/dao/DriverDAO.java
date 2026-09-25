@@ -25,6 +25,24 @@ public class DriverDAO {
         return drivers;
     }
 
+    public List<Driver> findAvailable() throws SQLException {
+        List<Driver> drivers = new ArrayList<>();
+        String sql = "SELECT d.*, u.name AS driver_name FROM drivers d " +
+                "LEFT JOIN users u ON d.user_id = u.id " +
+                "WHERE d.availability_status = 'available' AND d.employment_status = 'active' " +
+                "ORDER BY d.id DESC";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                drivers.add(mapRow(rs));
+            }
+        }
+        return drivers;
+    }
+
     public Driver findById(int id) throws SQLException {
         String sql = "SELECT d.*, u.name AS driver_name FROM drivers d " +
                 "LEFT JOIN users u ON d.user_id = u.id WHERE d.id = ?";
