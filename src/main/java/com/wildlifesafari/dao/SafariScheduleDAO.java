@@ -212,6 +212,40 @@ public class SafariScheduleDAO {
         }
     }
 
+    public SafariSchedule findByBookingId(int bookingId) throws SQLException {
+        String sql = SELECT_BASE + "WHERE s.booking_id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, bookingId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapRow(rs);
+                }
+            }
+        }
+        return null;
+    }
+
+    public java.util.Set<Integer> findCompletedBookingIds(int userId) throws SQLException {
+        java.util.Set<Integer> ids = new java.util.HashSet<>();
+        String sql = "SELECT s.booking_id FROM safari_schedules s " +
+                "JOIN bookings b ON s.booking_id = b.id " +
+                "WHERE b.user_id = ? AND s.trip_status = 'completed'";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, userId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    ids.add(rs.getInt("booking_id"));
+                }
+            }
+        }
+        return ids;
+    }
+
     private SafariSchedule mapRow(ResultSet rs) throws SQLException {
         SafariSchedule s = new SafariSchedule();
         s.setId(rs.getInt("id"));
