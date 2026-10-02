@@ -70,13 +70,25 @@ public class BookingServlet extends HttpServlet {
 
             if ("mine".equals(request.getParameter("view"))) {
                 List<Booking> myBookings = bookingDAO.findByUserId(user.getId());
+                java.util.Set<Integer> paidBookingIds = new com.wildlifesafari.dao.PaymentDAO().findPaidBookingIds(user.getId());
+                java.util.Set<Integer> completedBookingIds = scheduleDAO.findCompletedBookingIds(user.getId());
+                java.util.Set<Integer> reviewedBookingIds = new com.wildlifesafari.dao.ReviewDAO().findReviewedBookingIds(user.getId());
                 request.setAttribute("bookings", myBookings);
+                request.setAttribute("paidBookingIds", paidBookingIds);
+                request.setAttribute("completedBookingIds", completedBookingIds);
+                request.setAttribute("reviewedBookingIds", reviewedBookingIds);
                 request.getRequestDispatcher("/views/my-bookings.jsp").forward(request, response);
                 return;
             }
 
             List<SafariPackage> packages = packageDAO.findAll();
+            com.wildlifesafari.dao.ReviewDAO reviewDAO = new com.wildlifesafari.dao.ReviewDAO();
+            java.util.Map<Integer, Double> avgRatings = new java.util.HashMap<>();
+            for (SafariPackage pkg : packages) {
+                avgRatings.put(pkg.getId(), reviewDAO.getAverageRating(pkg.getId()));
+            }
             request.setAttribute("packages", packages);
+            request.setAttribute("avgRatings", avgRatings);
             request.getRequestDispatcher("/views/browse-packages.jsp").forward(request, response);
 
         } catch (SQLException e) {

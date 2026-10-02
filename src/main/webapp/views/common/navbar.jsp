@@ -76,6 +76,7 @@
                         <li><a class="dropdown-item" href="${pageContext.request.contextPath}/emergencies">Emergency Reports</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="${pageContext.request.contextPath}/payments">Payment Records</a></li>
+                        <li><a class="dropdown-item" href="${pageContext.request.contextPath}/reviews">Customer Reviews &amp; Ratings</a></li>
                     </ul>
                 </li>
                 <% } %>

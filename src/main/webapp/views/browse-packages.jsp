@@ -18,6 +18,7 @@
 <%
     User user = (User) session.getAttribute("loggedInUser");
     List<SafariPackage> packages = (List<SafariPackage>) request.getAttribute("packages");
+    java.util.Map<Integer, Double> avgRatings = (java.util.Map<Integer, Double>) request.getAttribute("avgRatings");
 %>
 
 <!-- Navigation -->
@@ -102,6 +103,23 @@
                         <p class="text-muted small flex-grow-1">
                             <%= pkg.getDescription() != null ? pkg.getDescription() : "Explore pristine wilderness and track signature species with certified park guides." %>
                         </p>
+
+                        <%
+                            Double avgRating = (avgRatings != null) ? avgRatings.get(pkg.getId()) : null;
+                            boolean hasRating = avgRating != null && avgRating > 0;
+                        %>
+                        <a href="${pageContext.request.contextPath}/package-reviews?packageId=<%= pkg.getId() %>" class="text-decoration-none mb-2 d-block">
+                            <% if (hasRating) { %>
+                            <span style="color: var(--safari-amber);">
+                <% int fullStars = (int) Math.round(avgRating);
+                    for (int i = 0; i < fullStars; i++) { %>★<% }
+                                for (int i = fullStars; i < 5; i++) { %>☆<% } %>
+            </span>
+                            <span class="small text-muted">(<%= String.format("%.1f", avgRating) %>) — See reviews</span>
+                            <% } else { %>
+                            <span class="small text-muted">No reviews yet</span>
+                            <% } %>
+                        </a>
 
                         <div class="d-flex justify-content-between align-items-center pt-3 border-top mt-3">
                             <div>
