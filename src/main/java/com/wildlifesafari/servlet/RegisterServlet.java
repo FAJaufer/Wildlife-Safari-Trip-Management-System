@@ -12,9 +12,14 @@ import javax.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.regex.Pattern;
 
 @WebServlet("/register")
 public class RegisterServlet extends HttpServlet {
+
+    private static final Pattern PASSWORD_PATTERN = Pattern.compile(
+            "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).{8,}$"
+    );
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -23,13 +28,24 @@ public class RegisterServlet extends HttpServlet {
         String name = request.getParameter("name");
         String email = request.getParameter("email");
         String password = request.getParameter("password");
+        String confirmPassword = request.getParameter("confirmPassword");
+
+        if (!password.equals(confirmPassword)) {
+            response.sendRedirect("views/register.jsp?error=mismatch");
+            return;
+        }
+
+        if (!PASSWORD_PATTERN.matcher(password).matches()) {
+            response.sendRedirect("views/register.jsp?error=weakpassword");
+            return;
+        }
 
         UserDAO userDAO = new UserDAO();
 
         try {
             User existing = userDAO.findByEmail(email);
             if (existing != null) {
-                response.sendRedirect("views/register.jsp?error=1");
+                response.sendRedirect("views/register.jsp?error=exists");
                 return;
             }
 
