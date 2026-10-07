@@ -65,34 +65,9 @@ public class ScheduleServlet extends HttpServlet {
 
             String action = request.getParameter("action");
 
-            if ("complete".equals(action)) {
-                int id = Integer.parseInt(request.getParameter("id"));
-                scheduleDAO.updateStatus(id, "completed");
-                response.sendRedirect(request.getContextPath() + "/schedules");
-                return;
-            }
-
-            if ("cancel".equals(action)) {
-                int id = Integer.parseInt(request.getParameter("id"));
-                scheduleDAO.updateStatus(id, "cancelled");
-                response.sendRedirect(request.getContextPath() + "/schedules");
-                return;
-            }
-
-            if ("delete".equals(action)) {
-                int id = Integer.parseInt(request.getParameter("id"));
-                scheduleDAO.delete(id);
-                response.sendRedirect(request.getContextPath() + "/schedules");
-                return;
-            }
-
             if ("reassign".equals(action)) {
                 int id = Integer.parseInt(request.getParameter("id"));
-                List<SafariSchedule> allSchedules = scheduleDAO.findAll();
-                SafariSchedule target = allSchedules.stream()
-                        .filter(s -> s.getId() == id)
-                        .findFirst()
-                        .orElse(null);
+                SafariSchedule target = scheduleDAO.findById(id);
 
                 if (target == null) {
                     response.sendError(HttpServletResponse.SC_NOT_FOUND, "Schedule not found");
@@ -144,8 +119,54 @@ public class ScheduleServlet extends HttpServlet {
         }
 
         String formType = request.getParameter("formType");
+        String action = request.getParameter("action");
+        String ctx = request.getContextPath();
 
         try {
+            // ---------- CANCEL / COMPLETE / DELETE ----------
+            if ("cancel".equals(action) || "complete".equals(action) || "delete".equals(action)) {
+                int id;
+                try {
+                    id = Integer.parseInt(request.getParameter("id"));
+                } catch (NumberFormatException e) {
+                    response.sendRedirect(ctx + "/schedules?error=invalid");
+                    return;
+                }
+
+                SafariSchedule existing = scheduleDAO.findById(id);
+                if (existing == null) {
+                    response.sendRedirect(ctx + "/schedules?error=notfound");
+                    return;
+                }
+
+                if ("delete".equals(action)) {
+                    scheduleDAO.delete(id);
+                    response.sendRedirect(ctx + "/schedules?deleted=1");
+                    return;
+                }
+
+                // Cancel and complete only apply to a schedule that is still active.
+                if (!"scheduled".equals(existing.getTripStatus())) {
+                    response.sendRedirect(ctx + "/schedules?error=notactive");
+                    return;
+                }
+
+                if ("cancel".equals(action)) {
+                    scheduleDAO.updateStatus(id, "cancelled");
+                    response.sendRedirect(ctx + "/schedules?released=1");
+                    return;
+                }
+
+                // complete
+                if ("cancelled".equalsIgnoreCase(existing.getBookingStatus())) {
+                    response.sendRedirect(ctx + "/schedules?error=bookingcancelled");
+                    return;
+                }
+                scheduleDAO.updateStatus(id, "completed");
+                response.sendRedirect(ctx + "/schedules?completed=1");
+                return;
+            }
+
             if ("reassign".equals(formType)) {
                 int scheduleId = Integer.parseInt(request.getParameter("scheduleId"));
                 String guideIdParam = request.getParameter("guideId");
@@ -153,19 +174,27 @@ public class ScheduleServlet extends HttpServlet {
                 String vehicleIdParam = request.getParameter("vehicleId");
                 Date scheduleDate = Date.valueOf(request.getParameter("scheduleDate"));
 
+                // The time slot comes from the stored schedule, not from the form.
+                SafariSchedule existingSchedule = scheduleDAO.findById(scheduleId);
+                if (existingSchedule == null) {
+                    response.sendRedirect(ctx + "/schedules?error=notfound");
+                    return;
+                }
+                String scheduleTime = existingSchedule.getScheduleTime();
+
                 Integer guideId = (guideIdParam != null && !guideIdParam.isEmpty()) ? Integer.parseInt(guideIdParam) : null;
                 Integer driverId = (driverIdParam != null && !driverIdParam.isEmpty()) ? Integer.parseInt(driverIdParam) : null;
                 Integer vehicleId = (vehicleIdParam != null && !vehicleIdParam.isEmpty()) ? Integer.parseInt(vehicleIdParam) : null;
 
-                String conflict = scheduleDAO.checkConflict(guideId, driverId, vehicleId, scheduleDate, scheduleId);
+                String conflict = scheduleDAO.checkConflict(guideId, driverId, vehicleId, scheduleDate, scheduleTime, scheduleId);
                 if (conflict != null) {
                     request.setAttribute("conflictError", conflict);
-                    response.sendRedirect(request.getContextPath() + "/schedules?action=reassign&id=" + scheduleId);
+                    response.sendRedirect(ctx + "/schedules?action=reassign&id=" + scheduleId);
                     return;
                 }
 
                 scheduleDAO.updateResources(scheduleId, guideId, driverId, vehicleId);
-                response.sendRedirect(request.getContextPath() + "/schedules?reassigned=1");
+                response.sendRedirect(ctx + "/schedules?reassigned=1");
                 return;
             }
 
@@ -186,7 +215,7 @@ public class ScheduleServlet extends HttpServlet {
             Integer driverId = (driverIdParam != null && !driverIdParam.isEmpty()) ? Integer.parseInt(driverIdParam) : null;
             Integer vehicleId = (vehicleIdParam != null && !vehicleIdParam.isEmpty()) ? Integer.parseInt(vehicleIdParam) : null;
 
-            String conflict = scheduleDAO.checkConflict(guideId, driverId, vehicleId, scheduleDate);
+            String conflict = scheduleDAO.checkConflict(guideId, driverId, vehicleId, scheduleDate, scheduleTime);
             if (conflict != null) {
                 request.setAttribute("conflictError", conflict);
                 doGet(request, response);
@@ -204,7 +233,7 @@ public class ScheduleServlet extends HttpServlet {
 
             scheduleDAO.create(s);
 
-            response.sendRedirect(request.getContextPath() + "/schedules?success=1");
+            response.sendRedirect(ctx + "/schedules?success=1");
 
         } catch (SQLException e) {
             e.printStackTrace();

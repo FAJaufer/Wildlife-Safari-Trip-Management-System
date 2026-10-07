@@ -75,6 +75,16 @@ public class PaymentDAO {
         }
     }
 
+    public void markRefunded(int bookingId) throws SQLException {
+        String sql = "UPDATE payments SET status = 'refunded' WHERE booking_id = ? AND status = 'success'";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, bookingId);
+            stmt.executeUpdate();
+        }
+    }
+
     public BigDecimal getTotalRevenue() throws SQLException {
         String sql = "SELECT COALESCE(SUM(amount), 0) AS total FROM payments WHERE status = 'success'";
         try (Connection conn = DBConnection.getConnection();
