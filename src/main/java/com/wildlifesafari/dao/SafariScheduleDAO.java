@@ -10,7 +10,7 @@ import java.util.List;
 public class SafariScheduleDAO {
 
     private static final String SELECT_BASE =
-            "SELECT s.*, b.booking_reference, p.safari_type, " +
+            "SELECT s.*, b.booking_reference, b.status AS booking_status, p.safari_type, " +
                     "gu.name AS guide_name, g.availability_status AS guide_availability, g.employment_status AS guide_employment, " +
                     "du.name AS driver_name, d.availability_status AS driver_availability, d.employment_status AS driver_employment, " +
                     "v.registration_number, v.availability_status AS vehicle_availability, v.maintenance_status AS vehicle_maintenance " +
@@ -38,41 +38,81 @@ public class SafariScheduleDAO {
         return schedules;
     }
 
-    public String checkConflict(Integer guideId, Integer driverId, Integer vehicleId, Date scheduleDate) throws SQLException {
-        return checkConflict(guideId, driverId, vehicleId, scheduleDate, null);
+    public SafariSchedule findById(int id) throws SQLException {
+        String sql = SELECT_BASE + "WHERE s.id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, id);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapRow(rs);
+                }
+            }
+        }
+        return null;
     }
 
-    public String checkConflict(Integer guideId, Integer driverId, Integer vehicleId, Date scheduleDate, Integer excludeScheduleId) throws SQLException {
+    // ---------------------------------------------------------------
+    // Conflict check (used when a manager assigns resources)
+    // ---------------------------------------------------------------
+
+    // Every slot name that clashes with the given slot.
+    // Morning <-> Morning/Full Day, Afternoon <-> Afternoon/Full Day, Full Day <-> everything.
+    private static List<String> conflictingSlots(String slot) {
+        if ("Full Day".equals(slot)) {
+            return java.util.Arrays.asList("Morning", "Afternoon", "Full Day");
+        }
+        if ("Morning".equals(slot) || "Afternoon".equals(slot)) {
+            return java.util.Arrays.asList(slot, "Full Day");
+        }
+        return java.util.Collections.singletonList(slot);
+    }
+
+    public String checkConflict(Integer guideId, Integer driverId, Integer vehicleId,
+                                Date scheduleDate, String scheduleTime) throws SQLException {
+        return checkConflict(guideId, driverId, vehicleId, scheduleDate, scheduleTime, null);
+    }
+
+    public String checkConflict(Integer guideId, Integer driverId, Integer vehicleId,
+                                Date scheduleDate, String scheduleTime, Integer excludeScheduleId) throws SQLException {
+        List<String> slots = conflictingSlots(scheduleTime);
+
         String sql = "SELECT s.id, s.guide_id, s.driver_id, s.vehicle_id, gu.name AS guide_name, du.name AS driver_name, v.registration_number " +
                 "FROM safari_schedules s " +
                 "LEFT JOIN guides g ON s.guide_id = g.id LEFT JOIN users gu ON g.user_id = gu.id " +
                 "LEFT JOIN drivers d ON s.driver_id = d.id LEFT JOIN users du ON d.user_id = du.id " +
                 "LEFT JOIN vehicles v ON s.vehicle_id = v.id " +
                 "WHERE s.schedule_date = ? AND s.trip_status != 'cancelled' " +
+                "AND s.schedule_time IN (" + placeholders(slots.size()) + ") " +
                 "AND (s.guide_id = ? OR s.driver_id = ? OR s.vehicle_id = ?)" +
                 (excludeScheduleId != null ? " AND s.id != ?" : "");
 
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            stmt.setDate(1, scheduleDate);
-            stmt.setObject(2, guideId);
-            stmt.setObject(3, driverId);
-            stmt.setObject(4, vehicleId);
+            int i = 1;
+            stmt.setDate(i++, scheduleDate);
+            for (String slot : slots) {
+                stmt.setString(i++, slot);
+            }
+            stmt.setObject(i++, guideId);
+            stmt.setObject(i++, driverId);
+            stmt.setObject(i++, vehicleId);
             if (excludeScheduleId != null) {
-                stmt.setInt(5, excludeScheduleId);
+                stmt.setInt(i, excludeScheduleId);
             }
 
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     if (guideId != null && guideId.equals(rs.getObject("guide_id"))) {
-                        return "Guide " + rs.getString("guide_name") + " is already assigned to another trip on this date.";
+                        return "Guide " + rs.getString("guide_name") + " is already assigned to an overlapping trip on this date.";
                     }
                     if (driverId != null && driverId.equals(rs.getObject("driver_id"))) {
-                        return "Driver " + rs.getString("driver_name") + " is already assigned to another trip on this date.";
+                        return "Driver " + rs.getString("driver_name") + " is already assigned to an overlapping trip on this date.";
                     }
                     if (vehicleId != null && vehicleId.equals(rs.getObject("vehicle_id"))) {
-                        return "Vehicle " + rs.getString("registration_number") + " is already assigned to another trip on this date.";
+                        return "Vehicle " + rs.getString("registration_number") + " is already assigned to an overlapping trip on this date.";
                     }
                 }
             }
@@ -151,52 +191,101 @@ public class SafariScheduleDAO {
         return schedules;
     }
 
-    public boolean isSlotAvailable(java.sql.Date date, String timeSlot) throws SQLException {
-        int availableGuides = countAvailable(
-                "SELECT COUNT(*) FROM guides WHERE employment_status = 'active' AND availability_status = 'available'",
-                date, timeSlot, "guide_id"
-        );
-        int availableDrivers = countAvailable(
-                "SELECT COUNT(*) FROM drivers WHERE employment_status = 'active' AND availability_status = 'available'",
-                date, timeSlot, "driver_id"
-        );
-        int availableVehicles = countAvailable(
-                "SELECT COUNT(*) FROM vehicles WHERE maintenance_status = 'active' AND availability_status = 'available'",
-                date, timeSlot, "vehicle_id"
-        );
+    // ---------------------------------------------------------------
+    // Availability check
+    // ---------------------------------------------------------------
 
-        return availableGuides > 0 && availableDrivers > 0 && availableVehicles > 0;
+    // The halves of the day a slot occupies. Full Day uses both halves.
+    private static List<String> halvesOf(String slot) {
+        if ("Full Day".equals(slot)) {
+            return java.util.Arrays.asList("Morning", "Afternoon");
+        }
+        return java.util.Collections.singletonList(slot);
     }
 
-    private int countAvailable(String totalCountSql, java.sql.Date date, String timeSlot, String resourceColumn) throws SQLException {
-        int total = 0;
-        int busy = 0;
+    // Every slot name that occupies a given half. Full Day covers both halves.
+    private static List<String> slotsCovering(String half) {
+        if ("Morning".equals(half) || "Afternoon".equals(half)) {
+            return java.util.Arrays.asList(half, "Full Day");
+        }
+        return java.util.Collections.singletonList(half);
+    }
 
-        try (Connection conn = DBConnection.getConnection()) {
+    private static String placeholders(int n) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < n; i++) {
+            sb.append(i == 0 ? "?" : ",?");
+        }
+        return sb.toString();
+    }
 
-            try (PreparedStatement stmt = conn.prepareStatement(totalCountSql);
-                 ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    total = rs.getInt(1);
-                }
-            }
+    // A slot is bookable if EVERY half of the day it occupies still has a free
+    // guide, driver and vehicle, after removing resources on active schedules
+    // and bookings that are still waiting for a schedule.
+    public boolean isSlotAvailable(java.sql.Date date, String timeSlot) throws SQLException {
+        for (String half : halvesOf(timeSlot)) {
+            int guides = countFree(
+                    "SELECT COUNT(*) FROM guides r JOIN users u ON r.user_id = u.id " +
+                            "WHERE r.employment_status = 'active' AND r.availability_status = 'available' AND u.role = 'guide'",
+                    "guide_id", date, half);
+            int drivers = countFree(
+                    "SELECT COUNT(*) FROM drivers r JOIN users u ON r.user_id = u.id " +
+                            "WHERE r.employment_status = 'active' AND r.availability_status = 'available' AND u.role = 'driver'",
+                    "driver_id", date, half);
+            int vehicles = countFree(
+                    "SELECT COUNT(*) FROM vehicles r " +
+                            "WHERE r.maintenance_status = 'active' AND r.availability_status = 'available'",
+                    "vehicle_id", date, half);
 
-            String busySql = "SELECT COUNT(DISTINCT " + resourceColumn + ") FROM safari_schedules " +
-                    "WHERE schedule_date = ? AND schedule_time = ? " +
-                    "AND trip_status != 'cancelled' AND " + resourceColumn + " IS NOT NULL";
+            int capacity = Math.min(guides, Math.min(drivers, vehicles));
+            int waiting = countUnscheduledBookings(date, half);
 
-            try (PreparedStatement stmt = conn.prepareStatement(busySql)) {
-                stmt.setDate(1, date);
-                stmt.setString(2, timeSlot);
-                try (ResultSet rs = stmt.executeQuery()) {
-                    if (rs.next()) {
-                        busy = rs.getInt(1);
-                    }
-                }
+            if (capacity - waiting <= 0) {
+                return false;
             }
         }
+        return true;
+    }
 
-        return total - busy;
+    // Eligible resources that are NOT on an active schedule covering this half of the day.
+    private int countFree(String eligibleSql, String resourceColumn, java.sql.Date date, String half) throws SQLException {
+        List<String> slots = slotsCovering(half);
+        String sql = eligibleSql +
+                " AND r.id NOT IN (SELECT " + resourceColumn + " FROM safari_schedules " +
+                "WHERE schedule_date = ? AND schedule_time IN (" + placeholders(slots.size()) + ") " +
+                "AND trip_status != 'cancelled' AND " + resourceColumn + " IS NOT NULL)";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setDate(1, date);
+            for (int i = 0; i < slots.size(); i++) {
+                stmt.setString(2 + i, slots.get(i));
+            }
+            try (ResultSet rs = stmt.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : 0;
+            }
+        }
+    }
+
+    // Confirmed bookings covering this half of the day that have not been scheduled yet.
+    private int countUnscheduledBookings(java.sql.Date date, String half) throws SQLException {
+        List<String> slots = slotsCovering(half);
+        String sql = "SELECT COUNT(*) FROM bookings " +
+                "WHERE safari_date = ? AND time_slot IN (" + placeholders(slots.size()) + ") AND status = 'confirmed' " +
+                "AND id NOT IN (SELECT booking_id FROM safari_schedules)";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setDate(1, date);
+            for (int i = 0; i < slots.size(); i++) {
+                stmt.setString(2 + i, slots.get(i));
+            }
+            try (ResultSet rs = stmt.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : 0;
+            }
+        }
     }
 
     public void updateResources(int scheduleId, Integer guideId, Integer driverId, Integer vehicleId) throws SQLException {
@@ -267,6 +356,7 @@ public class SafariScheduleDAO {
         s.setDriverEmployment(rs.getString("driver_employment"));
         s.setVehicleAvailability(rs.getString("vehicle_availability"));
         s.setVehicleMaintenance(rs.getString("vehicle_maintenance"));
+        s.setBookingStatus(rs.getString("booking_status"));
         return s;
     }
 }

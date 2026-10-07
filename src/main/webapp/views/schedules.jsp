@@ -25,6 +25,17 @@
     List<Vehicle> vehicles = (List<Vehicle>) request.getAttribute("vehicles");
     List<SafariSchedule> schedules = (List<SafariSchedule>) request.getAttribute("schedules");
     String conflictError = (String) request.getAttribute("conflictError");
+    String error = request.getParameter("error");
+
+    // Active schedules whose booking was cancelled: their guide/driver/vehicle are still locked.
+    int cancelledBookingCount = 0;
+    if (schedules != null) {
+        for (SafariSchedule sc : schedules) {
+            if ("scheduled".equals(sc.getTripStatus()) && "cancelled".equalsIgnoreCase(sc.getBookingStatus())) {
+                cancelledBookingCount++;
+            }
+        }
+    }
 %>
 
 <jsp:include page="/views/common/navbar.jsp" />
@@ -40,10 +51,33 @@
             <p class="text-muted small mb-0">Allocate guides, drivers, and vehicles to confirmed bookings</p>
         </div>
 
+        <% if (cancelledBookingCount > 0) { %>
+        <div class="alert alert-danger d-flex align-items-start gap-2">
+            <i class="bi bi-exclamation-octagon-fill fs-5"></i>
+            <div>
+                <strong><%= cancelledBookingCount %> schedule<%= cancelledBookingCount == 1 ? "" : "s" %>
+                    belong<%= cancelledBookingCount == 1 ? "s" : "" %> to cancelled bookings.</strong>
+                Their guide, driver and vehicle are still locked for that slot.
+                Click <strong>Cancel</strong> on each highlighted row to release them.
+            </div>
+        </div>
+        <% } %>
+
         <% if (conflictError != null) { %>
         <div class="alert alert-danger d-flex align-items-center gap-2">
             <i class="bi bi-exclamation-triangle-fill"></i>
             <div><strong>Scheduling conflict:</strong> <%= conflictError %></div>
+        </div>
+        <% } %>
+        <% if (error != null) { %>
+        <div class="alert alert-danger d-flex align-items-center gap-2">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <div>
+                <%= "notfound".equals(error) ? "That schedule no longer exists."
+                        : "notactive".equals(error) ? "Only a scheduled trip can be cancelled or completed."
+                        : "bookingcancelled".equals(error) ? "This trip's booking was cancelled, so it can't be marked completed. Cancel it instead."
+                        : "Please check the details and try again." %>
+            </div>
         </div>
         <% } %>
         <% if (request.getParameter("success") != null) { %>
@@ -52,11 +86,28 @@
             <div>Schedule created successfully!</div>
         </div>
         <% } %>
-
         <% if (request.getParameter("reassigned") != null) { %>
         <div class="alert alert-success d-flex align-items-center gap-2">
             <i class="bi bi-check-circle-fill"></i>
             <div>Resources reassigned successfully!</div>
+        </div>
+        <% } %>
+        <% if (request.getParameter("released") != null) { %>
+        <div class="alert alert-success d-flex align-items-center gap-2">
+            <i class="bi bi-check-circle-fill"></i>
+            <div>Schedule cancelled. The guide, driver and vehicle are free again.</div>
+        </div>
+        <% } %>
+        <% if (request.getParameter("completed") != null) { %>
+        <div class="alert alert-success d-flex align-items-center gap-2">
+            <i class="bi bi-check-circle-fill"></i>
+            <div>Schedule marked as completed.</div>
+        </div>
+        <% } %>
+        <% if (request.getParameter("deleted") != null) { %>
+        <div class="alert alert-success d-flex align-items-center gap-2">
+            <i class="bi bi-check-circle-fill"></i>
+            <div>Schedule deleted.</div>
         </div>
         <% } %>
 
@@ -129,8 +180,11 @@
                 </thead>
                 <tbody>
                 <% if (schedules != null) {
-                    for (SafariSchedule s : schedules) { %>
-                <tr>
+                    for (SafariSchedule s : schedules) {
+                        boolean active = "scheduled".equals(s.getTripStatus());
+                        boolean bookingCancelled = active && "cancelled".equalsIgnoreCase(s.getBookingStatus());
+                %>
+                <tr class="<%= bookingCancelled ? "table-danger" : "" %>">
                     <td class="fw-semibold"><%= s.getBookingReference() %></td>
                     <td><%= s.getPackageType() %></td>
                     <td><%= s.getGuideName() != null ? s.getGuideName() : "—" %></td>
@@ -148,23 +202,50 @@
                         <% } else { %>
                         <span class="safari-badge-sand"><%= s.getTripStatus() %></span>
                         <% } %>
+                        <% if (bookingCancelled) { %>
+                        <div class="mt-1">
+                            <span class="badge bg-danger"><i class="bi bi-x-octagon-fill me-1"></i>Booking Cancelled</span>
+                        </div>
+                        <% } %>
                     </td>
                     <td>
-                        <% if ("scheduled".equals(s.getTripStatus())) { %>
-                        <% boolean hasIssue = (s.getGuideId() != null && (!"available".equals(s.getGuideAvailability()) || !"active".equals(s.getGuideEmployment())))
-                                || (s.getDriverId() != null && (!"available".equals(s.getDriverAvailability()) || !"active".equals(s.getDriverEmployment())))
-                                || (s.getVehicleId() != null && (!"available".equals(s.getVehicleAvailability()) || !"active".equals(s.getVehicleMaintenance()))); %>
-                        <% if (hasIssue) { %>
-                        <a href="${pageContext.request.contextPath}/schedules?action=reassign&id=<%= s.getId() %>" class="btn btn-sm btn-warning fw-semibold">
-                            <i class="bi bi-exclamation-triangle-fill me-1"></i> Reassign
-                        </a>
-                        <% } %>
-                        <a href="${pageContext.request.contextPath}/schedules?action=complete&id=<%= s.getId() %>" class="btn btn-sm btn-safari-outline">Complete</a>
-                        <a href="${pageContext.request.contextPath}/schedules?action=cancel&id=<%= s.getId() %>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Cancel this schedule?')">Cancel</a>
-                        <% } %>
-                        <a href="${pageContext.request.contextPath}/schedules?action=delete&id=<%= s.getId() %>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Permanently delete this schedule? This cannot be undone.')">
-                            <i class="bi bi-trash"></i>
-                        </a>
+                        <div class="d-flex flex-wrap gap-1">
+                            <% if (active) { %>
+                            <% boolean hasIssue = (s.getGuideId() != null && (!"available".equals(s.getGuideAvailability()) || !"active".equals(s.getGuideEmployment())))
+                                    || (s.getDriverId() != null && (!"available".equals(s.getDriverAvailability()) || !"active".equals(s.getDriverEmployment())))
+                                    || (s.getVehicleId() != null && (!"available".equals(s.getVehicleAvailability()) || !"active".equals(s.getVehicleMaintenance()))); %>
+                            <% if (hasIssue && !bookingCancelled) { %>
+                            <a href="${pageContext.request.contextPath}/schedules?action=reassign&id=<%= s.getId() %>" class="btn btn-sm btn-warning fw-semibold">
+                                <i class="bi bi-exclamation-triangle-fill me-1"></i> Reassign
+                            </a>
+                            <% } %>
+
+                            <% if (!bookingCancelled) { %>
+                            <form action="${pageContext.request.contextPath}/schedules" method="post" class="m-0">
+                                <input type="hidden" name="action" value="complete">
+                                <input type="hidden" name="id" value="<%= s.getId() %>">
+                                <button type="submit" class="btn btn-sm btn-safari-outline">Complete</button>
+                            </form>
+                            <% } %>
+
+                            <form action="${pageContext.request.contextPath}/schedules" method="post" class="m-0"
+                                  onsubmit="return confirm('<%= bookingCancelled ? "Cancel this schedule and release its guide, driver and vehicle?" : "Cancel this schedule?" %>')">
+                                <input type="hidden" name="action" value="cancel">
+                                <input type="hidden" name="id" value="<%= s.getId() %>">
+                                <button type="submit" class="btn btn-sm <%= bookingCancelled ? "btn-danger fw-semibold" : "btn-outline-danger" %>"
+                                        <%= bookingCancelled ? "title=\"Release the guide, driver and vehicle\"" : "" %>>
+                                    <%= bookingCancelled ? "<i class=\"bi bi-unlock me-1\"></i>" : "" %>Cancel
+                                </button>
+                            </form>
+                            <% } %>
+
+                            <form action="${pageContext.request.contextPath}/schedules" method="post" class="m-0"
+                                  onsubmit="return confirm('Permanently delete this schedule? This cannot be undone.')">
+                                <input type="hidden" name="action" value="delete">
+                                <input type="hidden" name="id" value="<%= s.getId() %>">
+                                <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </div>
                     </td>
                 </tr>
                 <% } } %>

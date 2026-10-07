@@ -7,6 +7,7 @@ public class SafariSchedule {
     private int id;
     private int bookingId;
     private String bookingReference;   // via JOIN, for display
+    private String bookingStatus;      // via JOIN, for display
     private String packageType;        // via JOIN, for display
     private Integer guideId;
     private String guideName;          // via JOIN, for display
@@ -17,6 +18,13 @@ public class SafariSchedule {
     private Date scheduleDate;
     private String scheduleTime;
     private String tripStatus;
+
+    private String guideAvailability;
+    private String guideEmployment;
+    private String driverAvailability;
+    private String driverEmployment;
+    private String vehicleAvailability;
+    private String vehicleMaintenance;
 
     public SafariSchedule() {}
 
@@ -39,12 +47,8 @@ public class SafariSchedule {
         this.tripStatus = tripStatus;
     }
 
-    private String guideAvailability;
-    private String guideEmployment;
-    private String driverAvailability;
-    private String driverEmployment;
-    private String vehicleAvailability;
-    private String vehicleMaintenance;
+    public String getBookingStatus() { return bookingStatus; }
+    public void setBookingStatus(String bookingStatus) { this.bookingStatus = bookingStatus; }
 
     public String getGuideAvailability() { return guideAvailability; }
     public void setGuideAvailability(String guideAvailability) { this.guideAvailability = guideAvailability; }
@@ -63,6 +67,7 @@ public class SafariSchedule {
 
     public String getVehicleMaintenance() { return vehicleMaintenance; }
     public void setVehicleMaintenance(String vehicleMaintenance) { this.vehicleMaintenance = vehicleMaintenance; }
+
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
 

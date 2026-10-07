@@ -29,7 +29,7 @@ public class GuideDAO {
         List<Guide> guides = new ArrayList<>();
         String sql = "SELECT g.*, u.name AS guide_name FROM guides g " +
                 "LEFT JOIN users u ON g.user_id = u.id " +
-                "WHERE g.availability_status = 'available' AND g.employment_status = 'active' " +
+                "WHERE g.availability_status = 'available' AND g.employment_status = 'active' AND u.role = 'guide' " +
                 "ORDER BY g.id DESC";
 
         try (Connection conn = DBConnection.getConnection();
