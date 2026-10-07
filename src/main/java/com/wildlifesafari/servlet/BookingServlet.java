@@ -58,13 +58,6 @@ public class BookingServlet extends HttpServlet {
                 return;
             }
 
-            if ("cancel".equals(action)) {
-                int id = Integer.parseInt(request.getParameter("id"));
-                bookingDAO.updateStatus(id, "cancelled");
-                response.sendRedirect(request.getContextPath() + "/bookings?view=mine");
-                return;
-            }
-
             if ("book".equals(action)) {
                 int packageId = Integer.parseInt(request.getParameter("packageId"));
                 SafariPackage pkg = packageDAO.findById(packageId);
@@ -82,6 +75,8 @@ public class BookingServlet extends HttpServlet {
                 request.setAttribute("paidBookingIds", paidBookingIds);
                 request.setAttribute("completedBookingIds", completedBookingIds);
                 request.setAttribute("reviewedBookingIds", reviewedBookingIds);
+                request.setAttribute("refundStatuses",
+                        new com.wildlifesafari.dao.RefundRequestDAO().findStatusesByUserId(user.getId()));
                 request.getRequestDispatcher("/views/my-bookings.jsp").forward(request, response);
                 return;
             }
@@ -115,6 +110,39 @@ public class BookingServlet extends HttpServlet {
         }
 
         try {
+            // ---------- CANCEL ----------
+            if ("cancel".equals(request.getParameter("action"))) {
+                String ctx = request.getContextPath();
+
+                int id;
+                try {
+                    id = Integer.parseInt(request.getParameter("id"));
+                } catch (NumberFormatException e) {
+                    response.sendRedirect(ctx + "/bookings?view=mine&error=cancelDenied");
+                    return;
+                }
+
+                Booking booking = bookingDAO.findById(id);
+                boolean isStaff = user.getRole().equals("admin") || user.getRole().equals("manager");
+
+                // Same response for "not found" and "not yours" so ids can't be probed.
+                if (booking == null || (booking.getUserId() != user.getId() && !isStaff)) {
+                    response.sendRedirect(ctx + "/bookings?view=mine&error=cancelDenied");
+                    return;
+                }
+
+                if (!"confirmed".equals(booking.getStatus())
+                        || booking.getSafariDate().toLocalDate().isBefore(java.time.LocalDate.now())) {
+                    response.sendRedirect(ctx + "/bookings?view=mine&error=notCancellable");
+                    return;
+                }
+
+                bookingDAO.updateStatus(id, "cancelled");
+                response.sendRedirect(ctx + "/bookings?view=mine&success=cancelled");
+                return;
+            }
+
+            // ---------- CREATE BOOKING ----------
             int packageId = Integer.parseInt(request.getParameter("packageId"));
             Date safariDate = Date.valueOf(request.getParameter("safariDate"));
             String timeSlot = request.getParameter("timeSlot");
