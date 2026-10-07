@@ -22,7 +22,13 @@
   List<WildlifeSighting> recentSightings = (List<WildlifeSighting>) request.getAttribute("recentSightings");
   List<SafariSchedule> myTrips = (List<SafariSchedule>) request.getAttribute("myTrips");
   Boolean noGuideProfile = (Boolean) request.getAttribute("noGuideProfile");
+  WildlifeSighting editSighting = (WildlifeSighting) request.getAttribute("editSighting");
+  Integer myGuideId = (Integer) request.getAttribute("myGuideId");
+
   boolean isGuide = user.getRole().equals("guide");
+  boolean canManageAll = user.getRole().equals("admin") || user.getRole().equals("manager");
+  String success = request.getParameter("success");
+  String error = request.getParameter("error");
 %>
 
 <jsp:include page="/views/common/navbar.jsp" />
@@ -38,13 +44,72 @@
       <p class="text-muted small mb-0">Recent animal sightings logged by field naturalists</p>
     </div>
 
-    <% if (request.getParameter("success") != null) { %>
+    <% if (success != null) { %>
     <div class="alert alert-success d-flex align-items-center gap-2">
-      <i class="bi bi-check-circle-fill"></i><div>Sighting logged successfully!</div>
+      <i class="bi bi-check-circle-fill"></i>
+      <div>
+        <%= "updated".equals(success) ? "Sighting updated successfully!"
+                : "deleted".equals(success) ? "Sighting deleted."
+                : "Sighting logged successfully!" %>
+      </div>
     </div>
     <% } %>
 
-    <% if (isGuide) { %>
+    <% if (error != null) { %>
+    <div class="alert alert-danger d-flex align-items-center gap-2">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+      <div>
+        <%= "forbidden".equals(error) ? "You can only change your own sightings."
+                : "notfound".equals(error) ? "That sighting no longer exists."
+                : "Please check the details and try again." %>
+      </div>
+    </div>
+    <% } %>
+
+    <% if (editSighting != null) { %>
+    <!-- EDIT FORM -->
+    <div class="safari-card-static p-4 mb-4">
+      <h5 class="fw-bold mb-3"><i class="bi bi-pencil-square me-2"></i>Edit Sighting</h5>
+      <form action="${pageContext.request.contextPath}/sightings" method="post">
+        <input type="hidden" name="id" value="<%= editSighting.getId() %>">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label small fw-semibold">Species</label>
+            <input type="text" name="species" class="form-control" required maxlength="100"
+                   value="<%= editSighting.getSpecies() %>">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label small fw-semibold">Location</label>
+            <input type="text" name="location" class="form-control" required maxlength="150"
+                   value="<%= editSighting.getLocation() %>">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label small fw-semibold">Photo URL (optional)</label>
+            <input type="url" name="photoUrl" class="form-control" placeholder="https://..."
+                   value="<%= editSighting.getPhotoUrl() != null ? editSighting.getPhotoUrl() : "" %>">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label small fw-semibold">Date</label>
+            <input type="date" name="sightingDate" class="form-control" required
+                   value="<%= editSighting.getSightingDate() %>">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label small fw-semibold">Time</label>
+            <input type="time" name="sightingTime" class="form-control"
+                   value="<%= editSighting.getSightingTime() != null ? editSighting.getSightingTime() : "" %>">
+          </div>
+          <div class="col-md-12">
+            <button type="submit" class="btn btn-safari-amber">
+              <i class="bi bi-check2-circle me-1"></i> Update Sighting
+            </button>
+            <a href="${pageContext.request.contextPath}/sightings" class="btn btn-safari-outline">Cancel</a>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <% } else if (isGuide) { %>
+    <!-- LOG NEW SIGHTING (guides only) -->
     <% if (Boolean.TRUE.equals(noGuideProfile)) { %>
     <div class="alert alert-warning">
       <i class="bi bi-exclamation-triangle me-2"></i>Your account has role 'guide' but no guide profile is linked yet. Ask an admin/manager to create one for you under Guides.
@@ -71,11 +136,11 @@
           </div>
           <div class="col-md-4">
             <label class="form-label small fw-semibold">Species</label>
-            <input type="text" name="species" class="form-control" placeholder="e.g. African Elephant" required>
+            <input type="text" name="species" class="form-control" placeholder="e.g. African Elephant" required maxlength="100">
           </div>
           <div class="col-md-4">
             <label class="form-label small fw-semibold">Location</label>
-            <input type="text" name="location" class="form-control" placeholder="e.g. North Watering Hole" required>
+            <input type="text" name="location" class="form-control" placeholder="e.g. North Watering Hole" required maxlength="150">
           </div>
           <div class="col-md-4">
             <label class="form-label small fw-semibold">Date</label>
@@ -105,7 +170,9 @@
     <h4 class="font-heading mb-3">Recent Sightings</h4>
     <div class="row g-4">
       <% if (recentSightings != null) {
-        for (WildlifeSighting s : recentSightings) { %>
+        for (WildlifeSighting s : recentSightings) {
+          boolean canEdit = canManageAll || (isGuide && myGuideId != null && s.getGuideId() == myGuideId);
+      %>
       <div class="col-md-4">
         <div class="safari-card h-100">
           <% if (s.getPhotoUrl() != null && !s.getPhotoUrl().isEmpty()) { %>
@@ -116,6 +183,23 @@
             <p class="mb-1 text-muted small"><i class="bi bi-geo-alt me-1"></i><%= s.getLocation() %></p>
             <p class="mb-2 text-muted small"><i class="bi bi-calendar3 me-1"></i><%= s.getSightingDate() %> <%= s.getSightingTime() != null ? s.getSightingTime() : "" %></p>
             <span class="safari-badge-sand">Logged by <%= s.getGuideName() != null ? s.getGuideName() : "a guide" %></span>
+
+            <% if (canEdit) { %>
+            <div class="d-flex gap-2 mt-3">
+              <a href="${pageContext.request.contextPath}/sightings?action=edit&id=<%= s.getId() %>"
+                 class="btn btn-sm btn-safari-outline">
+                <i class="bi bi-pencil me-1"></i>Edit
+              </a>
+              <form action="${pageContext.request.contextPath}/sightings" method="post" class="m-0"
+                    onsubmit="return confirm('Delete this sighting?')">
+                <input type="hidden" name="action" value="delete">
+                <input type="hidden" name="id" value="<%= s.getId() %>">
+                <button type="submit" class="btn btn-sm btn-outline-danger">
+                  <i class="bi bi-trash me-1"></i>Delete
+                </button>
+              </form>
+            </div>
+            <% } %>
           </div>
         </div>
       </div>

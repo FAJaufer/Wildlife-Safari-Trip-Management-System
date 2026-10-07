@@ -40,7 +40,7 @@ public class SafariPackageDAO {
     }
 
     public void create(SafariPackage pkg) throws SQLException {
-        String sql = "INSERT INTO safari_packages (safari_type, destination, duration, price, description, availability_status, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO safari_packages (safari_type, destination, duration, price, description, availability_status, max_participants, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
@@ -50,13 +50,14 @@ public class SafariPackageDAO {
             stmt.setBigDecimal(4, pkg.getPrice());
             stmt.setString(5, pkg.getDescription());
             stmt.setString(6, pkg.getAvailabilityStatus());
-            stmt.setInt(7, pkg.getCreatedBy());
+            stmt.setInt(7, pkg.getMaxParticipants());
+            stmt.setInt(8, pkg.getCreatedBy());
             stmt.executeUpdate();
         }
     }
 
     public void update(SafariPackage pkg) throws SQLException {
-        String sql = "UPDATE safari_packages SET safari_type=?, destination=?, duration=?, price=?, description=?, availability_status=? WHERE id=?";
+        String sql = "UPDATE safari_packages SET safari_type=?, destination=?, duration=?, price=?, description=?, availability_status=?, max_participants=? WHERE id=?";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
@@ -66,7 +67,8 @@ public class SafariPackageDAO {
             stmt.setBigDecimal(4, pkg.getPrice());
             stmt.setString(5, pkg.getDescription());
             stmt.setString(6, pkg.getAvailabilityStatus());
-            stmt.setInt(7, pkg.getId());
+            stmt.setInt(7, pkg.getMaxParticipants());
+            stmt.setInt(8, pkg.getId());
             stmt.executeUpdate();
         }
     }
@@ -90,6 +92,7 @@ public class SafariPackageDAO {
                 rs.getBigDecimal("price"),
                 rs.getString("description"),
                 rs.getString("availability_status"),
+                rs.getInt("max_participants"),
                 rs.getInt("created_by")
         );
     }

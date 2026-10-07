@@ -11,12 +11,14 @@ public class SafariPackage {
     private BigDecimal price;
     private String description;
     private String availabilityStatus;
+    private int maxParticipants;
     private int createdBy;
 
     public SafariPackage() {}
 
     public SafariPackage(int id, String safariType, String destination, String duration,
-                         BigDecimal price, String description, String availabilityStatus, int createdBy) {
+                         BigDecimal price, String description, String availabilityStatus,
+                         int maxParticipants, int createdBy) {
         this.id = id;
         this.safariType = safariType;
         this.destination = destination;
@@ -24,6 +26,7 @@ public class SafariPackage {
         this.price = price;
         this.description = description;
         this.availabilityStatus = availabilityStatus;
+        this.maxParticipants = maxParticipants;
         this.createdBy = createdBy;
     }
 
@@ -47,6 +50,9 @@ public class SafariPackage {
 
     public String getAvailabilityStatus() { return availabilityStatus; }
     public void setAvailabilityStatus(String availabilityStatus) { this.availabilityStatus = availabilityStatus; }
+
+    public int getMaxParticipants() { return maxParticipants; }
+    public void setMaxParticipants(int maxParticipants) { this.maxParticipants = maxParticipants; }
 
     public int getCreatedBy() { return createdBy; }
     public void setCreatedBy(int createdBy) { this.createdBy = createdBy; }

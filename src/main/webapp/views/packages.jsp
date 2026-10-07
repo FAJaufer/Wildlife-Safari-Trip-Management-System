@@ -65,7 +65,7 @@
                     </div>
                     <div class="col-md-2">
                         <label class="form-label small fw-semibold">Price</label>
-                        <input type="number" step="0.01" name="price" class="form-control" placeholder="0.00"
+                        <input type="number" step="0.01" min="0.01" name="price" class="form-control" placeholder="0.00"
                                value="<%= editPackage != null ? editPackage.getPrice() : "" %>" required>
                     </div>
                     <div class="col-md-2">
@@ -75,9 +75,15 @@
                             <option value="unavailable" <%= (editPackage != null && "unavailable".equals(editPackage.getAvailabilityStatus())) ? "selected" : "" %>>Unavailable</option>
                         </select>
                     </div>
-                    <div class="col-md-12">
+                    <div class="col-md-10">
                         <label class="form-label small fw-semibold">Description</label>
                         <textarea name="description" class="form-control" placeholder="Describe the experience..." rows="2"><%= editPackage != null ? editPackage.getDescription() : "" %></textarea>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small fw-semibold">Max Participants</label>
+                        <input type="number" name="maxParticipants" class="form-control" min="1" step="1"
+                               value="<%= editPackage != null ? editPackage.getMaxParticipants() : 6 %>" required>
+                        <div class="form-text">Per booking</div>
                     </div>
                     <div class="col-md-12">
                         <button type="submit" class="btn btn-safari-amber">
@@ -98,7 +104,7 @@
             <table class="table table-safari align-middle">
                 <thead>
                 <tr>
-                    <th>Type</th><th>Destination</th><th>Duration</th><th>Price</th><th>Status</th>
+                    <th>Type</th><th>Destination</th><th>Duration</th><th>Price</th><th>Max Group</th><th>Status</th>
                     <% if (canManage) { %><th>Actions</th><% } %>
                 </tr>
                 </thead>
@@ -110,6 +116,7 @@
                     <td><%= pkg.getDestination() %></td>
                     <td><%= pkg.getDuration() %></td>
                     <td class="safari-price-tag" style="font-size: 1rem;">$<%= pkg.getPrice() %></td>
+                    <td><i class="bi bi-people me-1 text-muted"></i><%= pkg.getMaxParticipants() %></td>
                     <td>
                         <% if ("available".equals(pkg.getAvailabilityStatus())) { %>
                         <span class="safari-badge-forest">Available</span>
