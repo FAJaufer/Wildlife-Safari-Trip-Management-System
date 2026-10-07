@@ -58,6 +58,11 @@
                         <i class="bi bi-exclamation-triangle-fill"></i>
                         <div>This package allows a maximum of <%= pkg.getMaxParticipants() %> participants per booking. Please reduce your group size.</div>
                     </div>
+                    <% } else if ("pastDate".equals(error)) { %>
+                    <div class="alert alert-danger d-flex align-items-center gap-2 mb-3">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        <div>You can't book a safari for a past date. Please choose today or a later date.</div>
+                    </div>
                     <% } else if ("invalidParticipants".equals(error)) { %>
                     <div class="alert alert-danger d-flex align-items-center gap-2 mb-3">
                         <i class="bi bi-exclamation-triangle-fill"></i>
@@ -72,7 +77,8 @@
                             <label class="form-label small fw-semibold text-muted">Select Safari Date</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light border-end-0"><i class="bi bi-calendar-event text-muted"></i></span>
-                                <input type="date" id="safariDate" name="safariDate" class="form-control border-start-0 ps-0" required>
+                                <input type="date" id="safariDate" name="safariDate" class="form-control border-start-0 ps-0"
+                                       min="<%= java.time.LocalDate.now() %>" required>
                             </div>
                         </div>
 
@@ -150,7 +156,10 @@
         fetch(contextPath + '/bookings?action=checkAvailability&safariDate=' + encodeURIComponent(date) + '&timeSlot=' + encodeURIComponent(timeSlot))
             .then(res => res.text())
             .then(result => {
-                if (result.trim() === 'available') {
+                if (result.trim() === 'past') {
+                    messageDiv.innerHTML = '<div class="alert alert-danger py-2 px-3 mb-0 small"><i class="bi bi-x-circle-fill me-1"></i>Past dates can\'t be booked. Please choose today or a later date.</div>';
+                    submitBtn.disabled = true;
+                } else if (result.trim() === 'available') {
                     messageDiv.innerHTML = '<div class="alert alert-success py-2 px-3 mb-0 small"><i class="bi bi-check-circle-fill me-1"></i>Slot available!</div>';
                     submitBtn.disabled = false;
                 } else {

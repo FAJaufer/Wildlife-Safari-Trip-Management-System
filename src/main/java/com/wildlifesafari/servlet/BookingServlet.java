@@ -46,9 +46,14 @@ public class BookingServlet extends HttpServlet {
                 Date safariDate = Date.valueOf(request.getParameter("safariDate"));
                 String timeSlot = request.getParameter("timeSlot");
 
-                boolean available = scheduleDAO.isSlotAvailable(safariDate, timeSlot);
-
                 response.setContentType("text/plain");
+
+                if (safariDate.toLocalDate().isBefore(java.time.LocalDate.now())) {
+                    response.getWriter().write("past");
+                    return;
+                }
+
+                boolean available = scheduleDAO.isSlotAvailable(safariDate, timeSlot);
                 response.getWriter().write(available ? "available" : "full");
                 return;
             }
@@ -113,6 +118,13 @@ public class BookingServlet extends HttpServlet {
             int packageId = Integer.parseInt(request.getParameter("packageId"));
             Date safariDate = Date.valueOf(request.getParameter("safariDate"));
             String timeSlot = request.getParameter("timeSlot");
+
+            // Reject past dates server-side (the form's min attribute can be bypassed).
+            if (safariDate.toLocalDate().isBefore(java.time.LocalDate.now())) {
+                response.sendRedirect(request.getContextPath()
+                        + "/bookings?action=book&packageId=" + packageId + "&error=pastDate");
+                return;
+            }
 
             int participants;
             try {
