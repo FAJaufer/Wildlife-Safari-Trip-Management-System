@@ -113,11 +113,26 @@ public class BookingServlet extends HttpServlet {
             int packageId = Integer.parseInt(request.getParameter("packageId"));
             Date safariDate = Date.valueOf(request.getParameter("safariDate"));
             String timeSlot = request.getParameter("timeSlot");
-            int participants = Integer.parseInt(request.getParameter("participants"));
+
+            int participants;
+            try {
+                participants = Integer.parseInt(request.getParameter("participants"));
+            } catch (NumberFormatException e) {
+                response.sendRedirect(request.getContextPath()
+                        + "/bookings?action=book&packageId=" + packageId + "&error=invalidParticipants");
+                return;
+            }
 
             SafariPackage pkg = packageDAO.findById(packageId);
             if (pkg == null || !"available".equals(pkg.getAvailabilityStatus())) {
                 response.sendRedirect(request.getContextPath() + "/bookings?error=unavailable");
+                return;
+            }
+
+            // Enforce the package's group size cap server-side (the form's max attribute can be bypassed).
+            if (participants < 1 || participants > pkg.getMaxParticipants()) {
+                response.sendRedirect(request.getContextPath()
+                        + "/bookings?action=book&packageId=" + packageId + "&error=tooMany");
                 return;
             }
 

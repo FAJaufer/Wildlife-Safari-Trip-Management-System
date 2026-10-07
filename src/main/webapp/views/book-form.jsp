@@ -23,6 +23,7 @@
         response.sendRedirect(request.getContextPath() + "/bookings");
         return;
     }
+    String error = request.getParameter("error");
 %>
 
 <jsp:include page="/views/common/navbar.jsp" />
@@ -43,13 +44,24 @@
                     <p class="text-muted small mb-4">
                         <i class="bi bi-geo-alt text-warning me-1"></i> <%= pkg.getDestination() %> •
                         <i class="bi bi-clock text-warning mx-1"></i> <%= pkg.getDuration() %> •
+                        <i class="bi bi-people text-warning mx-1"></i> Max <%= pkg.getMaxParticipants() %> per booking •
                         <strong class="text-dark">$<%= pkg.getPrice() %></strong> / explorer
                     </p>
 
-                    <% if ("full".equals(request.getParameter("error"))) { %>
+                    <% if ("full".equals(error)) { %>
                     <div class="alert alert-danger d-flex align-items-center gap-2 mb-3">
                         <i class="bi bi-exclamation-triangle-fill"></i>
                         <div>Slots are full for that date and time. Please choose a different slot.</div>
+                    </div>
+                    <% } else if ("tooMany".equals(error)) { %>
+                    <div class="alert alert-danger d-flex align-items-center gap-2 mb-3">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        <div>This package allows a maximum of <%= pkg.getMaxParticipants() %> participants per booking. Please reduce your group size.</div>
+                    </div>
+                    <% } else if ("invalidParticipants".equals(error)) { %>
+                    <div class="alert alert-danger d-flex align-items-center gap-2 mb-3">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        <div>Please enter a valid number of participants.</div>
                     </div>
                     <% } %>
 
@@ -79,10 +91,14 @@
                         <div id="availabilityMessage" class="mb-3"></div>
 
                         <div class="mb-4">
-                            <label class="form-label small fw-semibold text-muted">Number of Participants</label>
+                            <label class="form-label small fw-semibold text-muted">
+                                Number of Participants
+                                <span class="fw-normal">(max <%= pkg.getMaxParticipants() %>)</span>
+                            </label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light border-end-0"><i class="bi bi-people text-muted"></i></span>
-                                <input type="number" id="participants" name="participants" class="form-control border-start-0 ps-0" min="1" max="10" value="1" required oninput="calcTotal(this.value)">
+                                <input type="number" id="participants" name="participants" class="form-control border-start-0 ps-0"
+                                       min="1" max="<%= pkg.getMaxParticipants() %>" value="1" required oninput="calcTotal(this.value)">
                             </div>
                         </div>
 

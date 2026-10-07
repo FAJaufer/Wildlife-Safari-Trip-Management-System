@@ -48,6 +48,22 @@ public class WildlifeSightingDAO {
         return sightings;
     }
 
+    public WildlifeSighting findById(int id) throws SQLException {
+        String sql = SELECT_BASE + "WHERE ws.id = ?";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, id);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapRow(rs);
+                }
+            }
+        }
+        return null;
+    }
+
     public void create(WildlifeSighting s) throws SQLException {
         String sql = "INSERT INTO wildlife_sightings (schedule_id, guide_id, species, location, sighting_date, sighting_time, photo_url) VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = DBConnection.getConnection();
@@ -60,6 +76,32 @@ public class WildlifeSightingDAO {
             stmt.setDate(5, s.getSightingDate());
             stmt.setString(6, s.getSightingTime());
             stmt.setString(7, s.getPhotoUrl());
+            stmt.executeUpdate();
+        }
+    }
+
+    // Updates only the editable fields; trip (schedule_id) and guide stay as they were.
+    public void update(WildlifeSighting s) throws SQLException {
+        String sql = "UPDATE wildlife_sightings SET species=?, location=?, sighting_date=?, sighting_time=?, photo_url=? WHERE id=?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, s.getSpecies());
+            stmt.setString(2, s.getLocation());
+            stmt.setDate(3, s.getSightingDate());
+            stmt.setString(4, s.getSightingTime());
+            stmt.setString(5, s.getPhotoUrl());
+            stmt.setInt(6, s.getId());
+            stmt.executeUpdate();
+        }
+    }
+
+    public void delete(int id) throws SQLException {
+        String sql = "DELETE FROM wildlife_sightings WHERE id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, id);
             stmt.executeUpdate();
         }
     }

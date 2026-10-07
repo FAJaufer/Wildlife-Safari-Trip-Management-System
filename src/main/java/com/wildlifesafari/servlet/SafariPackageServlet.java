@@ -67,22 +67,45 @@ public class SafariPackageServlet extends HttpServlet {
         String safariType = request.getParameter("safariType");
         String destination = request.getParameter("destination");
         String duration = request.getParameter("duration");
-        BigDecimal price = new BigDecimal(request.getParameter("price"));
         String description = request.getParameter("description");
         String availabilityStatus = request.getParameter("availabilityStatus");
+
+        BigDecimal price;
+        try {
+            price = new BigDecimal(request.getParameter("price"));
+        } catch (NumberFormatException | NullPointerException e) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Price must be a valid number");
+            return;
+        }
+        if (price.compareTo(BigDecimal.ZERO) <= 0) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Price must be greater than zero");
+            return;
+        }
+
+        int maxParticipants;
+        try {
+            maxParticipants = Integer.parseInt(request.getParameter("maxParticipants"));
+        } catch (NumberFormatException e) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Max participants must be a whole number");
+            return;
+        }
+        if (maxParticipants < 1) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Max participants must be at least 1");
+            return;
+        }
 
         try {
             if (idParam != null && !idParam.isEmpty()) {
                 // Update existing
                 SafariPackage pkg = new SafariPackage(
                         Integer.parseInt(idParam), safariType, destination, duration,
-                        price, description, availabilityStatus, user.getId());
+                        price, description, availabilityStatus, maxParticipants, user.getId());
                 packageDAO.update(pkg);
             } else {
                 // Create new
                 SafariPackage pkg = new SafariPackage(
                         0, safariType, destination, duration,
-                        price, description, availabilityStatus, user.getId());
+                        price, description, availabilityStatus, maxParticipants, user.getId());
                 packageDAO.create(pkg);
             }
 
